@@ -26,6 +26,28 @@ model User {
   role     String
   createdAt  DateTime @default(now())
 }
+model Product {
+  id    String  @id @default(uuid()) @map("_id")  // Unique ID for each product
+  name  String  // Product name
+  parts Part[]  // One-to-many relationship with Part
+}
+
+model Part {
+  id         String   @id @default(uuid()) @map("_id")  // Unique ID for each part
+  productId  String   // Foreign key to link with Product
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name       String   // Part name
+  motionType Motion   // Enum for motion type
+  pos1       Int?     // Nullable, required only for linear motion
+  pos2       Int?     // Nullable, required only for linear motion
+  unit      String?  // Nullable, required only for linear motion   
+  value      Int?     // Nullable, required only for rotary motion
+}
+
+enum Motion {
+  LINEAR
+  ROTARY
+}
 
 
 

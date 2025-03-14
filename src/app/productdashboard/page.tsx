@@ -1,4 +1,4 @@
-import Superproject from '@/src/pages/superproject'
+import Superproject from '@/src/pages/superprojectdashboard'
 import React from 'react'
 
 function page() {

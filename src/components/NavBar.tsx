@@ -9,9 +9,9 @@ function NavBar() {
   const [role, setRole] = useState(""); // State to store role
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    
       setRole(localStorage.getItem("userRole") || "");
-    }
+    
   }, []);
 
   const pathname = usePathname(); // Get current path
@@ -54,9 +54,9 @@ function NavBar() {
                 Create User
               </Link>
               <Link
-                href="/product"
+                href="/productdashboard"
                 className={`hover:text-yellow-300 ${
-                  pathname === "/product"
+                  pathname === "/productdashboard"
                     ? "text-yellow-400"
                     : "text-white"
                 }`}
