@@ -5,8 +5,11 @@ import Footer from "../components/Footer";
 import NavBar from "../components/NavBar";
 
 const UserTable = () => {
+
   const [users, setUsers] = useState([]);
-  const [filterRole, setFilterRole] = useState("");
+  const [role, setRole] = useState("");
+  
+  const [filterRole, setFilterRole] = useState("operator");
   const router = useRouter();
 
   // Fetch users from API
@@ -23,6 +26,11 @@ const UserTable = () => {
 
   useEffect(() => {
     fetchUsers();
+    
+      setRole(localStorage.getItem("userRole") || "");
+   
+    console.log("Role:", role);
+    // setFilterRole(role==="superadmin" ?  "Operator":"Admin" );
   }, []);
 
   // Function to delete user
@@ -67,7 +75,7 @@ const UserTable = () => {
                 <th className="p-3">User ID</th>
                 <th className="p-3">Role</th>
                 <th className="p-3">
-                  <select
+                  {/* <select
                     className="bg-[#588C91] text-white border p-2 rounded-md"
                     value={filterRole}
                     onChange={(e) => setFilterRole(e.target.value)}
@@ -75,7 +83,7 @@ const UserTable = () => {
                     <option value="">All Roles</option>
                     <option value="Admin">Admin</option>
                     <option value="Operator">Operator</option>
-                  </select>
+                  </select> */}
                 </th>
               </tr>
             </thead>

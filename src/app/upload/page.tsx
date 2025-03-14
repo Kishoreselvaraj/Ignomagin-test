@@ -1,11 +1,18 @@
+import React from 'react';
+import TaskUpload from '../../pages/uploadCSV'; // Adjust path if needed
 
-import TaskUpload from '../../pages/uploadCSV'
-import React from 'react'
+function Page() {
+  // Define fetchTasks function
+  const fetchTasks = async () => {
+    console.log("Fetching tasks...");
+    // Add API call or task refresh logic here
+  };
 
-function page() {
   return (
-    <div><TaskUpload/></div>
-  )
+    <div>
+      <TaskUpload fetchTasks={fetchTasks} />
+    </div>
+  );
 }
 
-export default page
+export default Page;

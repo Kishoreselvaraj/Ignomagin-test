@@ -29,6 +29,11 @@ export default function LoginPage() {
       }
 
       console.log("Login successful:", user);
+      localStorage.setItem("userRole", user.role);
+      if(user.role === "superadmin") 
+        router.push("/superuser?role=superadmin");
+         // Redirect to create user page
+      else
       router.push("/home"); // Redirect to home page
 
     } catch (err) {

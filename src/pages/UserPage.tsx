@@ -12,7 +12,7 @@ export default function UserPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState("operator");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -156,9 +156,9 @@ export default function UserPage() {
                 className="w-full p-2 border rounded-md bg-gray-200"
                 required
               >
-                <option value="">Select Role</option>
-                <option value="admin">Admin</option>
-                <option value="operator">Operator</option>
+                <option value="Operator">Operator</option>
+                {/* <option value="admin">Admin</option> */}
+                {/* <option value="operator">Operator</option> */}
               </select>
             </div>
           </div>
