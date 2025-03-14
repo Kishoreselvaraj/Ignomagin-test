@@ -89,14 +89,14 @@ const CreateProject = () => {
           <h2 className="text-xl font-semibold mb-2">Parts</h2>
 
           {parts.map((part, index) => (
-            <div key={index} className="border p-3 rounded mb-4 relative">
+            <div key={index} className="border pt-10 p-3 rounded mb-4 relative">
               {parts.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removePart(index)}
-                  className="absolute top-2 right-2 text-red-500 font-bold text-lg"
+                  className="absolute  top-2 right-2 text-red-500  text-lg"
                 >
-                  ✕
+                  Remove
                 </button>
               )}
 
