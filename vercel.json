@@ -4,7 +4,6 @@
         "DATABASE_URL": "mongodb+srv://kishoreselvaraj2004:kishore2004@cluster0.gbzvk.mongodb.net/igno?retryWrites=true&w=majority&appName=Cluster0"
       },
       "commands": [
-        "npx prisma generate",
         "npm run build"
       ]
     }
