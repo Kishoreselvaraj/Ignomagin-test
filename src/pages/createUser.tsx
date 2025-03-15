@@ -1,11 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
 
-export default function SuperUserPage() {
+function SuperUserForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -19,14 +19,15 @@ export default function SuperUserPage() {
   const [editId, setEditId] = useState("");
 
   useEffect(() => {
-    // Check if we're in edit mode
-    const edit = searchParams?.get("edit");
-    if (edit === "true") {
-      setIsEditing(true);
-      setEditId(searchParams!.get("id") || "");
-      setUsername(searchParams!.get("username") || "");
-      setUserId(searchParams!.get("userId") || "");
-      setRole(searchParams!.get("role") || "");
+    if (searchParams) {
+      const edit = searchParams.get("edit");
+      if (edit === "true") {
+        setIsEditing(true);
+        setEditId(searchParams.get("id") || "");
+        setUsername(searchParams.get("username") || "");
+        setUserId(searchParams.get("userId") || "");
+        setRole(searchParams.get("role") || "");
+      }
     }
   }, [searchParams]);
 
@@ -61,7 +62,6 @@ export default function SuperUserPage() {
         );
       }
 
-      // Reset form and redirect
       setUsername("");
       setUserId("");
       setPassword("");
@@ -71,11 +71,11 @@ export default function SuperUserPage() {
         isEditing ? "User updated successfully!" : "User created successfully!"
       );
 
-      // Redirect back to dashboard after a short delay
       setTimeout(() => {
         router.push("/superuser");
       }, 1500);
     } catch (error) {
+      console.error("Error fetching parts:", error);
       setMessage(isEditing ? "Failed to update user" : "Failed to create user");
     } finally {
       setLoading(false);
@@ -156,8 +156,8 @@ export default function SuperUserPage() {
                 className="w-full p-2 border rounded-md bg-gray-200"
                 required
               >
-                <option value="Operator">Options</option>
-                <option value="admin">Admin</option> 
+                <option value="">Select Role</option>
+                <option value="admin">Admin</option>
                 <option value="operator">Operator</option>
               </select>
             </div>
@@ -201,5 +201,13 @@ export default function SuperUserPage() {
       </div>
       <Footer />
     </div>
+  );
+}
+
+export default function SuperUserPage() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <SuperUserForm />
+    </Suspense>
   );
 }

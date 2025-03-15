@@ -39,6 +39,7 @@ function HomePage() {
         console.log("Sorted Tasks:", updatedTasks);
         setTasks(updatedTasks);
       } catch (error) {
+        
         console.error("Error fetching tasks:", error);
       }
     };

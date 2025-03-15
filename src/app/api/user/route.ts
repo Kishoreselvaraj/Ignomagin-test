@@ -30,6 +30,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(user);
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error fetching user(s)" }, { status: 500 });
   }
 } 
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error creating user" }, { status: 500 });
   }
 }
@@ -59,6 +61,7 @@ export async function PUT(req: Request) {
     });
     return NextResponse.json(user);
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error updating user" }, { status: 500 });
   }
 }
@@ -73,6 +76,7 @@ export async function DELETE(req: Request) {
       await prisma.user.delete({ where: { id } });
       return NextResponse.json({ message: "User deleted successfully" });
     } catch (error) {
+      console.error("Error fetching parts:", error);
       return NextResponse.json({ error: "Error deleting user" }, { status: 500 });
     }
   }

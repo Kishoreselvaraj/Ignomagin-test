@@ -4,20 +4,28 @@ import React, { useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import NavBar from "../components/NavBar";
 
+// Define TypeScript Interface for User
+interface User {
+  id: string;
+  userId: string;
+  createdAt: string;
+  username: string;
+  role: string;
+}
+
 const SuperUserTable = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [role, setRole] = useState<string>("");
+  const [filterRole, setFilterRole] = useState<string>("");
 
-  const [users, setUsers] = useState([]);
-  const [role, setRole] = useState("");
-  
-  const [filterRole, setFilterRole] = useState("");
   const router = useRouter();
-
+console.log(role)
   // Fetch users from API
   const fetchUsers = async () => {
     try {
       const response = await fetch("/api/user");
       if (!response.ok) throw new Error("Failed to fetch users");
-      const data = await response.json();
+      const data: User[] = await response.json();
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -26,19 +34,16 @@ const SuperUserTable = () => {
 
   useEffect(() => {
     fetchUsers();
-    
-      setRole(localStorage.getItem("userRole") || "");
-   
-    console.log("Role:", role);
-    setFilterRole(role==="superadmin" ?  "Operator":"Admin" );
-  }, []);
+
+    const storedRole = localStorage.getItem("userRole") || "";
+    setRole(storedRole);
+    setFilterRole(storedRole === "superadmin" ? "Operator" : "Admin");
+  }, []); // ✅ Removed `role` dependency to avoid unnecessary re-renders
 
   // Function to delete user
   const deleteUser = async (id: string) => {
-    const confirm = window.confirm(
-      "Are you sure you want to delete this user?"
-    );
-    if (!confirm) return;
+    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
+    if (!confirmDelete) return;
     try {
       const response = await fetch(`/api/user?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
@@ -50,22 +55,21 @@ const SuperUserTable = () => {
     }
   };
 
-  const handleEdit = (user: any) => {
+  const handleEdit = (user: User) => {
     router.push(
       `/create-user?edit=true&id=${user.id}&username=${user.username}&userId=${user.userId}&role=${user.role}`
     );
   };
 
-  const filteredUsers = users.filter((user: { id: string; role: string }) =>
-    filterRole
-      ? user.role.trim().toLowerCase() === filterRole.toLowerCase()
-      : true
+  // Filter users based on selected role
+  const filteredUsers = users.filter((user) =>
+    filterRole ? user.role.trim().toLowerCase() === filterRole.toLowerCase() : true
   );
 
   return (
     <div>
       <NavBar />
-      <div className="p-6 ">
+      <div className="p-6">
         <div className="min-h-[350px] max-h-[350px] overflow-y-auto">
           <table className="min-w-full bg-white shadow-md rounded-lg border">
             <thead className="bg-[#588C91] text-white h-12">
@@ -89,45 +93,25 @@ const SuperUserTable = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map(
-                (
-                  user: {
-                    id: string;
-                    userId: string;
-                    createdAt: string;
-                    username: string;
-                    role: string;
-                  },
-                  index
-                ) => (
-                  <tr
-                    key={user.id || index}
-                    className="border-t text-center hover:bg-gray-100"
-                  >
-                    <td className="p-3">{index+1}</td>
-                    <td className="p-3">
-                      {new Date(user.createdAt).toISOString().split("T")[0]}
-                    </td>
-                    <td className="p-3">{user.username}</td>
-                    <td className="p-3">{user.userId}</td>
-                    <td className="p-3">{user.role}</td>
-                    <td className="p-3 text-blue-500">
-                      <button
-                        className="mr-4 text-orange-500"
-                        onClick={() => handleEdit(user)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="text-red-500"
-                        onClick={() => deleteUser(user.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                )
-              )}
+              {filteredUsers.map((user, index) => (
+                <tr key={user.id || index} className="border-t text-center hover:bg-gray-100">
+                  <td className="p-3">{index + 1}</td>
+                  <td className="p-3">
+                    {new Date(user.createdAt).toISOString().split("T")[0]}
+                  </td>
+                  <td className="p-3">{user.username}</td>
+                  <td className="p-3">{user.userId}</td>
+                  <td className="p-3">{user.role}</td>
+                  <td className="p-3 text-blue-500">
+                    <button className="mr-4 text-orange-500" onClick={() => handleEdit(user)}>
+                      Edit
+                    </button>
+                    <button className="text-red-500" onClick={() => deleteUser(user.id)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

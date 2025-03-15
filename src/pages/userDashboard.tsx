@@ -4,20 +4,35 @@ import React, { useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import NavBar from "../components/NavBar";
 
-const UserTable = () => {
+// Define user type
+interface User {
+  id: string;
+  userId: string;
+  createdAt: string;
+  username: string;
+  role: string;
+}
 
-  const [users, setUsers] = useState([]);
-  const [role, setRole] = useState("");
-  
-  const [filterRole, setFilterRole] = useState("operator");
+const UserTable = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [role, setRole] = useState<string>(""); // Initialize as empty string
+  const [filterRole, setFilterRole] = useState<string>("operator");
   const router = useRouter();
 
+  useEffect(() => {
+    // Only access localStorage on the client side
+    if (typeof window !== "undefined") {
+      const storedRole = localStorage.getItem("userRole") || "";
+      setRole(storedRole);
+    }
+  }, []);
+  console.log(setRole,setFilterRole)
   // Fetch users from API
   const fetchUsers = async () => {
     try {
       const response = await fetch("/api/user");
       if (!response.ok) throw new Error("Failed to fetch users");
-      const data = await response.json();
+      const data: User[] = await response.json();
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -26,19 +41,11 @@ const UserTable = () => {
 
   useEffect(() => {
     fetchUsers();
-    
-      setRole(localStorage.getItem("userRole") || "");
-   
-    console.log("Role:", role);
-    // setFilterRole(role==="superadmin" ?  "Operator":"Admin" );
-  }, []);
+  }, [role]);
 
   // Function to delete user
   const deleteUser = async (id: string) => {
-    const confirm = window.confirm(
-      "Are you sure you want to delete this user?"
-    );
-    if (!confirm) return;
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
       const response = await fetch(`/api/user?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
@@ -50,22 +57,22 @@ const UserTable = () => {
     }
   };
 
-  const handleEdit = (user: any) => {
+  // Function to handle editing
+  const handleEdit = (user: User) => {
     router.push(
       `/userCreate?edit=true&id=${user.id}&username=${user.username}&userId=${user.userId}&role=${user.role}`
     );
   };
 
-  const filteredUsers = users.filter((user: { id: string; role: string }) =>
-    filterRole
-      ? user.role.trim().toLowerCase() === filterRole.toLowerCase()
-      : true
+  // Filter users by role
+  const filteredUsers = users.filter((user) =>
+    user.role.trim().toLowerCase() === filterRole.toLowerCase()
   );
 
   return (
     <div>
       <NavBar />
-      <div className="p-6 ">
+      <div className="p-6">
         <div className="min-h-[350px] max-h-[350px] overflow-y-auto">
           <table className="min-w-full bg-white shadow-md rounded-lg border">
             <thead className="bg-[#588C91] text-white h-12">
@@ -74,58 +81,28 @@ const UserTable = () => {
                 <th className="p-3">User Name</th>
                 <th className="p-3">User ID</th>
                 <th className="p-3">Role</th>
-                <th className="p-3">
-                  {/* <select
-                    className="bg-[#588C91] text-white border p-2 rounded-md"
-                    value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value)}
-                  >
-                    <option value="">All Roles</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Operator">Operator</option>
-                  </select> */}
-                </th>
+                <th className="p-3"></th>
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map(
-                (
-                  user: {
-                    id: string;
-                    userId: string;
-                    createdAt: string;
-                    username: string;
-                    role: string;
-                  },
-                  index
-                ) => (
-                  <tr
-                    key={user.id || index}
-                    className="border-t text-center hover:bg-gray-100"
-                  >
-                    <td className="p-3">
-                      {new Date(user.createdAt).toISOString().split("T")[0]}
-                    </td>
-                    <td className="p-3">{user.username}</td>
-                    <td className="p-3">{user.userId}</td>
-                    <td className="p-3">{user.role}</td>
-                    <td className="p-3 text-blue-500">
-                      <button
-                        className="mr-4 text-orange-500"
-                        onClick={() => handleEdit(user)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="text-red-500"
-                        onClick={() => deleteUser(user.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                )
-              )}
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className="border-t text-center hover:bg-gray-100">
+                  <td className="p-3">
+                    {new Date(user.createdAt).toISOString().split("T")[0]}
+                  </td>
+                  <td className="p-3">{user.username}</td>
+                  <td className="p-3">{user.userId}</td>
+                  <td className="p-3">{user.role}</td>
+                  <td className="p-3 text-blue-500">
+                    <button className="mr-4 text-orange-500" onClick={() => handleEdit(user)}>
+                      Edit
+                    </button>
+                    <button className="text-red-500" onClick={() => deleteUser(user.id)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

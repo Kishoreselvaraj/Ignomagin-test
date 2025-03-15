@@ -76,6 +76,7 @@ export default function UserPage() {
         router.push("/user");
       }, 1500);
     } catch (error) {
+      console.error("Error fetching parts:", error);
       setMessage(isEditing ? "Failed to update user" : "Failed to create user");
     } finally {
       setLoading(false);

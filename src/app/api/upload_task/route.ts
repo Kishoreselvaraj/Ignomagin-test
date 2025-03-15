@@ -8,6 +8,18 @@ import { promisify } from "util";
 const prisma = new PrismaClient();
 const writeFile = promisify(fs.writeFile);
 
+// Define an interface for task structure
+interface Task {
+  taskName: string;
+  pos1: string;
+  pos2: string;
+  speed: string;
+  cycleCount: string;
+  runTime: string;
+  motion: string;
+  part: string;
+}
+
 // **GET Method: Fetch all tasks**
 export async function GET() {
     try {
@@ -40,29 +52,18 @@ export async function POST(req: NextRequest) {
         await writeFile(filePath, buffer);
 
         // Read and parse CSV file
-        const results = await new Promise<
-            { taskName: string; pos1: string; pos2: string; speed: string; cycleCount: string; runTime: string; motion: string; part: string }[]
-        >((resolve, reject) => {
-            const data: any[] = [];
+        const results = await new Promise<Task[]>((resolve, reject) => {
+            const data: Task[] = []; // Typed array instead of 'any[]'
             fs.createReadStream(filePath)
                 .pipe(csvParser())
-                .on("data", (row) => data.push(row))
+                .on("data", (row: Task) => data.push(row)) // Ensure row matches Task type
                 .on("end", () => resolve(data))
                 .on("error", (error) => reject(error));
         });
 
         // Insert tasks into MongoDB
         await prisma.task.createMany({
-            data: results.map((row) => ({
-                taskName: row.taskName,
-                pos1: row.pos1,
-                pos2: row.pos2,
-                speed: row.speed,
-                cycleCount: row.cycleCount,
-                runTime: row.runTime,
-                motion: row.motion,
-                part: row.part,
-            })),
+            data: results,
         });
 
         // Delete file after processing

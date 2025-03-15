@@ -17,6 +17,7 @@ export async function GET(req: Request) {
     const parts = await prisma.part.findMany();
     return NextResponse.json(parts);
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error fetching parts" }, { status: 500 });
   }
 }
@@ -24,12 +25,13 @@ export async function GET(req: Request) {
 // 🟢 POST - Add a Part to a Product
 export async function POST(req: Request) {
   try {
-    const { productId, name, motionType, pos1, pos2, value,unite } = await req.json();
+    const { productId, name, motionType, pos1, pos2, value,unit } = await req.json();
     const part = await prisma.part.create({
-      data: { productId, name, motionType, pos1, pos2, value,unite },
+      data: { productId, name, motionType, pos1, pos2, value,unit },
     });
     return NextResponse.json(part, { status: 201 });
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error creating part" }, { status: 500 });
   }
 }
@@ -45,6 +47,7 @@ export async function DELETE(req: Request) {
     await prisma.part.delete({ where: { id } });
     return NextResponse.json({ message: "Part deleted successfully" });
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error deleting part" }, { status: 500 });
   }
 }

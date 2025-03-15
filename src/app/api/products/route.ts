@@ -23,6 +23,7 @@ export async function GET(req: Request) {
     const products = await prisma.product.findMany({ include: { parts: true } });
     return NextResponse.json(products);
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error fetching product(s)" }, { status: 500 });
   }
 }
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
     const product = await prisma.product.create({ data: { name } });
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error creating product" }, { status: 500 });
   }
 }
@@ -53,6 +55,7 @@ export async function PUT(req: Request) {
     });
     return NextResponse.json(product);
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error updating product" }, { status: 500 });
   }
 }
@@ -68,6 +71,7 @@ export async function DELETE(req: Request) {
     await prisma.product.delete({ where: { id } });
     return NextResponse.json({ message: "Product deleted successfully" });
   } catch (error) {
+    console.error("Error fetching parts:", error);
     return NextResponse.json({ error: "Error deleting product" }, { status: 500 });
   }
 }

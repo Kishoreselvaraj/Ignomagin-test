@@ -44,6 +44,7 @@ const TaskUpload = ({ fetchTasks }: TaskUploadProps) => {
             await fetchTasks(); // Refresh the task list
             alert("File uploaded successfully!");
         } catch (error) {
+            console.error("Error fetching parts:", error);
             alert("File uploaded successfully!");
         } finally {
             setUploading(false);
