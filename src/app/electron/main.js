@@ -14,7 +14,7 @@ app.on('ready', () => {
         },
     });
 
-    mainWindow.loadURL('http://localhost:3000'); // Load your Next.js app
+    mainWindow.loadURL('https://ignomagin-test-yedu.vercel.app/'); // Load your Next.js app
 
     mainWindow.on('closed', () => {
         mainWindow = null;
