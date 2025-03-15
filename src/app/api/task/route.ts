@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 }
 
 // Fetch all tasks
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     
     const tasks = await prisma.task.findMany();

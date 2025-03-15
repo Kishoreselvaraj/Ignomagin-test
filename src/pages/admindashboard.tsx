@@ -20,7 +20,7 @@ const SuperUserTable = () => {
 
   const router = useRouter();
 console.log(role)
-  // Fetch users from API
+// Fetch users from API
   const fetchUsers = async () => {
     try {
       const response = await fetch("/api/user");
