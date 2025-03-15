@@ -1,8 +1,7 @@
 {
   "build": {
     "env": {
-      "DATABASE_URL": "your-mongodb-url"
-    },
-    "command": "npm run build"
+      "DATABASE_URL": "mongodb+srv://kishoreselvaraj2004:kishore2004@cluster0.gbzvk.mongodb.net/igno?retryWrites=true&w=majority&appName=Cluster0"
+    }
   }
 }
