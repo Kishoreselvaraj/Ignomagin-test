@@ -24,9 +24,9 @@ export async function GET(req: Request) {
 // 🟢 POST - Add a Part to a Product
 export async function POST(req: Request) {
   try {
-    const { productId, name, motionType, pos1, pos2, value,unit } = await req.json();
+    const { productId, name, motionType, pos1, pos2, value,unite } = await req.json();
     const part = await prisma.part.create({
-      data: { productId, name, motionType, pos1, pos2, value,unit },
+      data: { productId, name, motionType, pos1, pos2, value,unite },
     });
     return NextResponse.json(part, { status: 201 });
   } catch (error) {
