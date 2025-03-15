@@ -85,6 +85,11 @@ const Superproject = () => {
                             Value: {part.value}
                           </p>
                         )}
+                        {part.motionType === "ROTARY" && (
+                          <p className="text-gray-700">
+                            Unit: {part.unit}
+                          </p>
+                        )}
                       </li>
                     ))}
                   </ul>

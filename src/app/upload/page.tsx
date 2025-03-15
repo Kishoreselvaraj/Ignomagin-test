@@ -1,5 +1,7 @@
+"use client";
 import React from 'react';
 import TaskUpload from '../../pages/uploadCSV'; // Adjust path if needed
+export const dynamic = "force-dynamic";
 
 function Page() {
   // Define fetchTasks function

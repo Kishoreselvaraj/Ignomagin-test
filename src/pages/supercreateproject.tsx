@@ -9,22 +9,22 @@ import Footer from "../components/Footer";
 interface Part {
   name: string;
   motionType: "LINEAR" | "ROTARY";
-  pos1: number; 
-  pos2: number ;
-  value?: number;
-  unit?: string; // ✅ Now used for both LINEAR and ROTARY
+  pos1: number | null;
+  pos2: number | null;
+  value?: number | null;
+  unit: string;
 }
 
 const CreateProject = () => {
   const [name, setName] = useState("");
   const [parts, setParts] = useState<Part[]>([
-    { name: "", motionType: "LINEAR", pos1: 0, pos2: 0 , unit: "MM" },
+    { name: "", motionType: "LINEAR", pos1: 0, pos2: 0, unit: "MM" },
   ]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const addPart = () => {
-    setParts([...parts, { name: "", motionType: "LINEAR", pos1: 0, pos2: 0 , unit: "MM" }]);
+    setParts([...parts, { name: "", motionType: "LINEAR", pos1: 0, pos2: 0, unit: "MM" }]);
   };
 
   const removePart = (index: number) => {
@@ -48,17 +48,21 @@ const CreateProject = () => {
       const validParts = parts.filter((part) => part.name.trim() !== "");
 
       await Promise.all(
-        validParts.map((part) =>
-          axios.post("/api/parts", {
+        validParts.map((part) => {
+          const payload = {
             productId,
             name: part.name,
             motionType: part.motionType,
-            pos1: part.motionType === "LINEAR" ? part.pos1 : undefined,
-            pos2: part.motionType === "LINEAR" ? part.pos2 : undefined,
-            value: part.motionType === "ROTARY" ? part.value : undefined,
-            unit: part.unit, // ✅ Now always sending the unit, whether LINEAR or ROTARY
-          })
-        )
+            pos1: part.motionType === "LINEAR" ? part.pos1 : null,
+            pos2: part.motionType === "LINEAR" ? part.pos2 : null,
+            value: part.motionType === "ROTARY" ? part.value : null,
+            unit: part.unit || (part.motionType === "ROTARY" ? "DEG" : "MM"),
+          };
+
+          console.log("Sending data:", payload); // Debugging log
+
+          return axios.post("/api/parts", payload);
+        })
       );
 
       router.push("/productdashboard");
@@ -94,7 +98,7 @@ const CreateProject = () => {
                 <button
                   type="button"
                   onClick={() => removePart(index)}
-                  className="absolute  top-2 right-2 text-red-500  text-lg"
+                  className="absolute top-2 right-2 text-red-500 text-lg"
                 >
                   Remove
                 </button>
@@ -115,7 +119,20 @@ const CreateProject = () => {
                 <select
                   value={part.motionType}
                   onChange={(e) =>
-                    setParts(parts.map((p, i) => (i === index ? { ...p, motionType: e.target.value as "LINEAR" | "ROTARY" } : p)))
+                    setParts(
+                      parts.map((p, i) =>
+                        i === index
+                          ? {
+                              ...p,
+                              motionType: e.target.value as "LINEAR" | "ROTARY",
+                              unit: e.target.value === "ROTARY" ? "DEG" : "MM", // Reset unit based on motion type
+                              pos1: e.target.value === "LINEAR" ? 0 : null,
+                              pos2: e.target.value === "LINEAR" ? 0 : null,
+                              value: e.target.value === "ROTARY" ? 0 : null,
+                            }
+                          : p
+                      )
+                    )
                   }
                   className="border p-2 rounded bg-gray-300"
                 >
@@ -147,7 +164,6 @@ const CreateProject = () => {
                 </div>
               )}
 
-              {/* ✅ Added Unit Dropdown for LINEAR */}
               {part.motionType === "LINEAR" && (
                 <select
                   value={part.unit}

@@ -1,10 +1,15 @@
-import SuperUserPage from '@/src/pages/createUser'
-import React from 'react'
+"use client";
+export const dynamic = "force-dynamic";
 
-function page() {
+import SuperUserPage from '@/src/pages/createUser';
+import React, { Suspense } from "react";
+
+function Page() {
   return (
-    <div><SuperUserPage /></div>
-  )
+    <Suspense fallback={<div>Loading...</div>}>
+      <SuperUserPage />
+    </Suspense>
+  );
 }
 
-export default page
+export default Page;
