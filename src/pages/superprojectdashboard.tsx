@@ -61,34 +61,28 @@ const Superproject = () => {
                 <p className="text-sm text-gray-600">
                   Parts: {product.parts.length}
                 </p>
-                
+
                 {product.parts.length > 0 && (
                   <ul className="mt-2 text-sm">
                     {product.parts.map((part) => (
                       <li key={part.id} className="border-t pt-1">
-                        <span className="font-medium">{part.name}</span> 
-                        ({part.motionType})
-                        
+                        <span className="font-medium">{part.name}</span>(
+                        {part.motionType})
                         {part.motionType === "LINEAR" && (
                           <p className="text-gray-700">
                             Pos1: {part.pos1} | Pos2: {part.pos2}
                           </p>
                         )}
-                        {part.motionType === "LINEAR" && (
-                          <p className="text-gray-700">
-                            Unit: {part.unit}
-                          </p>
-                        )}
-
                         {part.motionType === "ROTARY" && (
-                          <p className="text-gray-700">
-                            Value: {part.value}
-                          </p>
+                          <p className="text-gray-700">Unit: {part.unit}</p>
                         )}
                         {part.motionType === "ROTARY" && (
                           <p className="text-gray-700">
-                            Unit: {part.unit}
+                            Pos1: {part.pos1} | Pos2: {part.pos2}
                           </p>
+                        )}
+                        {part.motionType === "ROTARY" && (
+                          <p className="text-gray-700">Unit: {part.unit}</p>
                         )}
                       </li>
                     ))}

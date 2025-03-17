@@ -27,10 +27,12 @@ model User {
   createdAt  DateTime @default(now())
 }
 model Product {
-  id    String  @id @default(uuid()) @map("_id")  // Unique ID for each product
-  name  String  // Product name
-  parts Part[]  // One-to-many relationship with Part
+  id       String  @id @default(uuid()) @map("_id")
+  name     String
+  imageUrl String? // Nullable field to store image URL
+  parts    Part[]
 }
+
 
 model Part {
   id         String   @id @default(uuid()) @map("_id")  // Unique ID for each part

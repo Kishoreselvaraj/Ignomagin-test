@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import fs from "fs";
+import path from "path";
 
 const prisma = new PrismaClient();
 
@@ -28,14 +30,46 @@ export async function GET(req: Request) {
   }
 }
 
-// 🟢 POST - Create a New Product
+// 🟢 POST - Create a New Product with Image Upload
 export async function POST(req: Request) {
   try {
-    const { name } = await req.json();
-    const product = await prisma.product.create({ data: { name } });
+    const formData = await req.formData();
+    const name = formData.get("name") as string;
+    const image = formData.get("image");
+
+    if (!name) {
+      return NextResponse.json({ error: "Product name is required" }, { status: 400 });
+    }
+
+    let imageUrl = null;
+
+    if (image && image instanceof Blob) {
+      // Ensure uploads folder exists
+      const uploadDir = path.join(process.cwd(), "public/uploads");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const fileName = `${Date.now()}-${image.name}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      // Save file locally
+      const buffer = await image.arrayBuffer();
+      fs.writeFileSync(filePath, Buffer.from(buffer));
+
+      // Store image URL relative to public folder
+      imageUrl = `/uploads/${fileName}`;
+    }
+
+    // Create Product in the database
+    const product = await prisma.product.create({
+      data: { name, imageUrl },
+    });
+
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    console.error("Error fetching parts:", error);
+    console.error("Error creating product:", error);
     return NextResponse.json({ error: "Error creating product" }, { status: 500 });
   }
 }
@@ -55,7 +89,7 @@ export async function PUT(req: Request) {
     });
     return NextResponse.json(product);
   } catch (error) {
-    console.error("Error fetching parts:", error);
+    console.error("Error updating product:", error);
     return NextResponse.json({ error: "Error updating product" }, { status: 500 });
   }
 }
@@ -71,7 +105,7 @@ export async function DELETE(req: Request) {
     await prisma.product.delete({ where: { id } });
     return NextResponse.json({ message: "Product deleted successfully" });
   } catch (error) {
-    console.error("Error fetching parts:", error);
+    console.error("Error deleting product:", error);
     return NextResponse.json({ error: "Error deleting product" }, { status: 500 });
   }
 }
