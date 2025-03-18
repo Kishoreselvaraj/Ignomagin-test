@@ -38,37 +38,8 @@ export async function GET(req: Request) {
 // 🟢 POST - Create a New Product with Image Upload
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
-    const name = formData.get("name") as string;
-    const image = formData.get("image");
-
-    if (!name) {
-      return NextResponse.json({ error: "Product name is required" }, { status: 400 });
-    }
-
-    let imageUrl = null;
-
-    // Handle image upload
-    if (image && image instanceof Blob) {
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
-      const fileName = `${Date.now()}-${image.name}`;
-      const filePath = path.join(uploadDir, fileName);
-
-      const buffer = await image.arrayBuffer();
-      fs.writeFileSync(filePath, Buffer.from(buffer));
-
-      imageUrl = `/uploads/${fileName}`;
-    }
-
-    // Create the product in the database
-    const product = await prisma.product.create({
-      data: { name, imageUrl },
-    });
-
+    const { name } = await req.json();
+    const product = await prisma.product.create({ data: { name } });
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);

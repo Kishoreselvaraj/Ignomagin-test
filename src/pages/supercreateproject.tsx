@@ -9,8 +9,8 @@ import Footer from "../components/Footer";
 interface Part {
   name: string;
   motionType: "LINEAR" | "ROTARY";
-  pos1: number | null;
-  pos2: number | null;
+  pos1?: number | null;
+  pos2?: number | null;
   value?: number | null;
   unit: string;
 }
@@ -21,15 +21,42 @@ const CreateProject = () => {
   const [parts, setParts] = useState<Part[]>([
     { name: "", motionType: "LINEAR", pos1: 0, pos2: 0, unit: "MM" },
   ]);
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const addPart = () => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAddPart = () => {
     setParts([...parts, { name: "", motionType: "LINEAR", pos1: 0, pos2: 0, unit: "MM" }]);
   };
 
-  const removePart = (index: number) => {
-    setParts(parts.filter((_, i) => i !== index));
+  const handlePartChange = (index: number, field: keyof Part, value: string | number) => {
+    setParts((prevParts) =>
+      prevParts.map((part, i) =>
+        i === index
+          ? {
+              ...part,
+              [field]: value,
+              ...(field === "motionType"
+                ? {
+                    unit: value === "LINEAR" ? "MM" : "DEG",
+                    pos1: value === "LINEAR" ? 0 : null,
+                    pos2: value === "LINEAR" ? 0 : null,
+                    value: value === "ROTARY" ? 0 : null,
+                  }
+                : {}),
+            }
+          : part
+      )
+    );
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,13 +76,7 @@ const CreateProject = () => {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("name", name);
-      if (image) formData.append("image", image);
-
-      const productRes = await axios.post("/api/products", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const productRes = await axios.post("/api/products", { name });
       const productId = productRes.data.id;
 
       const validParts = parts.filter((part) => part.name.trim() !== "");
@@ -66,13 +87,13 @@ const CreateProject = () => {
             productId,
             name: part.name,
             motionType: part.motionType,
-            pos1: part.pos1,
-            pos2: part.pos2,
+            pos1: part.motionType === "LINEAR" ? part.pos1 : null,
+            pos2: part.motionType === "LINEAR" ? part.pos2 : null,
             value: part.motionType === "ROTARY" ? part.value : null,
-            unit: part.unit,
+            unit: part.unit || (part.motionType === "ROTARY" ? "DEG" : "MM"),
           };
 
-          console.log("Sending data:", payload);
+          console.log("Sending data:", payload); // Debugging log
 
           return axios.post("/api/parts", payload);
         })
@@ -103,39 +124,27 @@ const CreateProject = () => {
             required
           />
 
-          <label className="block mb-2 text-xl font-semibold">Product Image:</label>
-          <input
-            type="file"
-            onChange={handleImageChange}
-            className="border p-2 rounded w-full mb-4 bg-gray-300"
-            accept="image/*"
-          />
-
           <h2 className="text-xl font-semibold mb-2">Parts</h2>
-
           {parts.map((part, index) => (
             <div key={index} className="border p-3 rounded mb-4 relative">
               {parts.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removePart(index)}
-                  className="absolute top-2 right-2 text-red-500 text-lg"
+                  className="absolute  top-2 right-2 text-red-500  text-lg"
                 >
                   ✕
                 </button>
               )}
 
-              <div className="flex gap-4 mb-2">
-                <input
-                  type="text"
-                  placeholder="Part Name"
-                  value={part.name}
-                  onChange={(e) =>
-                    setParts(parts.map((p, i) => (i === index ? { ...p, name: e.target.value } : p)))
-                  }
-                  className="border p-2 rounded w-full bg-gray-300"
-                  required
-                />
+              <input
+                type="text"
+                placeholder="Part Name"
+                value={part.name}
+                onChange={(e) => handlePartChange(index, "name", e.target.value)}
+                className="border p-2 rounded w-full bg-gray-300 mb-2"
+                required
+              />
 
                 <select
                   value={part.motionType}
@@ -146,7 +155,10 @@ const CreateProject = () => {
                           ? {
                               ...p,
                               motionType: e.target.value as "LINEAR" | "ROTARY",
-                              unit: e.target.value === "ROTARY" ? "DEG" : "MM",
+                              unit: e.target.value === "ROTARY" ? "DEG" : "MM", // Reset unit based on motion type
+                              pos1: e.target.value === "LINEAR" ? 0 : null,
+                              pos2: e.target.value === "LINEAR" ? 0 : null,
+                              value: e.target.value === "ROTARY" ? 0 : null,
                             }
                           : p
                       )
@@ -159,55 +171,79 @@ const CreateProject = () => {
                 </select>
               </div>
 
-              <div className="flex gap-4 mb-2">
-                <input
-                  type="number"
-                  placeholder="Pos1"
-                  value={part.pos1 ?? ""}
-                  onChange={(e) =>
-                    setParts(parts.map((p, i) => (i === index ? { ...p, pos1: Number(e.target.value) } : p)))
-                  }
-                  className="border p-2 rounded bg-gray-300"
-                />
-                <input
-                  type="number"
-                  placeholder="Pos2"
-                  value={part.pos2 ?? ""}
-                  onChange={(e) =>
-                    setParts(parts.map((p, i) => (i === index ? { ...p, pos2: Number(e.target.value) } : p)))
-                  }
-                  className="border p-2 rounded bg-gray-300"
-                />
-              </div>
+              {part.motionType === "LINEAR" && (
+                <div className="flex gap-4">
+                  <input
+                    type="number"
+                    placeholder="Pos1"
+                    value={part.pos1 || ""}
+                    onChange={(e) =>
+                      setParts(parts.map((p, i) => (i === index ? { ...p, pos1: Number(e.target.value) } : p)))
+                    }
+                    className="border p-2 rounded w-full bg-gray-300"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Pos2"
+                    value={part.pos2 || ""}
+                    onChange={(e) =>
+                      setParts(parts.map((p, i) => (i === index ? { ...p, pos2: Number(e.target.value) } : p)))
+                    }
+                    className="border p-2 rounded w-full bg-gray-300"
+                  />
+                </div>
+              )}
 
-              <select
-                value={part.unit}
-                onChange={(e) =>
-                  setParts(parts.map((p, i) => (i === index ? { ...p, unit: e.target.value } : p)))
-                }
-                className="border p-2 rounded bg-gray-300"
-              >
-                {part.motionType === "LINEAR" ? (
-                  <>
-                    <option value="MM">MM</option>
-                    <option value="CM">CM</option>
-                  </>
-                ) : (
-                  <option value="DEG">DEG</option>
-                )}
-              </select>
+              {part.motionType === "LINEAR" && (
+                <select
+                  value={part.unit}
+                  onChange={(e) =>
+                    setParts(parts.map((p, i) => (i === index ? { ...p, unit: e.target.value } : p)))
+                  }
+                  className="border p-2 rounded bg-gray-300 w-full mt-2"
+                >
+                  <option value="MM">MM</option>
+                  <option value="CM">CM</option>
+                  <option value="IN">IN</option>
+                </select>
+              )}
+
+              {part.motionType === "ROTARY" && (
+                <div className="flex gap-4">
+                  <input
+                    type="number"
+                    placeholder="Enter Value"
+                    value={part.value || ""}
+                    onChange={(e) =>
+                      setParts(parts.map((p, i) => (i === index ? { ...p, value: Number(e.target.value) } : p)))
+                    }
+                    className="border p-2 rounded w-full bg-gray-300"
+                  />
+
+                  <select
+                    value={part.unit}
+                    onChange={(e) =>
+                      setParts(parts.map((p, i) => (i === index ? { ...p, unit: e.target.value } : p)))
+                    }
+                    className="border p-2 rounded bg-gray-300"
+                  >
+                    <option value="DEG">DEG</option>
+                    <option value="RAD">RAD</option>
+                  </select>
+                </div>
+              )}
             </div>
           ))}
 
-          <button type="button" onClick={addPart} className="text-orange-500 font-semibold mb-4">
+          <button
+            type="button"
+            onClick={handleAddPart}
+            className="bg-green-500 text-white px-4 py-2 rounded-2xl font-semibold mb-4"
+          >
             + Add Part
           </button>
 
-          <button
-            type="submit"
-            className="w-full bg-orange-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-md transition-transform transform hover:scale-105 hover:bg-orange-600 active:scale-95 disabled:opacity-50"
-            disabled={loading}
-          >
+          <button type="submit" className="w-full bg-orange-500 text-white px-6 py-3 rounded-2xl font-semibold">
             {loading ? "Saving..." : "Save Product"}
           </button>
         </form>

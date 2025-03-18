@@ -29,9 +29,9 @@ model User {
 model Product {
   id    String  @id @default(uuid()) @map("_id")  // Unique ID for each product
   name  String  // Product name
-  imageUrl String? // Image URL
   parts Part[]  // One-to-many relationship with Part
 }
+
 
 model Part {
   id         String   @id @default(uuid()) @map("_id")  // Unique ID for each part
