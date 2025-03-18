@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
+import Image from "next/image";
 
 interface Part {
   id: string;
@@ -26,7 +27,9 @@ interface Product {
 const Superproject = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedProductId, setExpandedProductId] = useState<string | null>(null); // Track expanded product
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(
+    null
+  ); // Track expanded product
   const router = useRouter();
 
   useEffect(() => {
@@ -80,10 +83,13 @@ const Superproject = () => {
                   onClick={() => toggleExpand(product.id)}
                 >
                   {product.imageUrl && (
-                    <img
+                    <Image
                       src={product.imageUrl}
                       alt={product.name}
-                      className="w-32 h-32 object-contain rounded-lg mr-4"
+                      width={128} // w-32 = 128px
+                      height={128} // h-32 = 128px
+                      className="object-contain rounded-lg mr-4"
+                      priority // Improves LCP (Largest Contentful Paint) performance
                     />
                   )}
                   <div>
@@ -118,13 +124,18 @@ const Superproject = () => {
                 {expandedProductId === product.id && (
                   <div className="mt-4 p-4 bg-white rounded-lg border border-gray-300">
                     <h3 className="text-lg font-bold">Product Details</h3>
-                    <p><strong>Name:</strong> {product.name}</p>
+                    <p>
+                      <strong>Name:</strong> {product.name}
+                    </p>
                     {product.imageUrl && (
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="w-full max-w-xs h-auto object-contain rounded-lg mt-2"
-                      />
+                      <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      width={128}   // w-32 = 128px
+                      height={128}  // h-32 = 128px
+                      className="object-contain rounded-lg mr-4"
+                      priority      // Improves LCP (Largest Contentful Paint) performance
+                    />
                     )}
 
                     <h3 className="text-lg font-bold mt-4">Parts:</h3>
@@ -135,11 +146,21 @@ const Superproject = () => {
                             key={part.id}
                             className="border p-2 rounded-lg shadow-sm bg-gray-50"
                           >
-                            <p><strong>Name:</strong> {part.name}</p>
-                            <p><strong>Motion Type:</strong> {part.motionType}</p>
-                            {part.pos1 !== undefined && <p>Position 1: {part.pos1}</p>}
-                            {part.pos2 !== undefined && <p>Position 2: {part.pos2}</p>}
-                            {part.speed !== undefined && <p>speed: {part.speed}</p>}
+                            <p>
+                              <strong>Name:</strong> {part.name}
+                            </p>
+                            <p>
+                              <strong>Motion Type:</strong> {part.motionType}
+                            </p>
+                            {part.pos1 !== undefined && (
+                              <p>Position 1: {part.pos1}</p>
+                            )}
+                            {part.pos2 !== undefined && (
+                              <p>Position 2: {part.pos2}</p>
+                            )}
+                            {part.speed !== undefined && (
+                              <p>speed: {part.speed}</p>
+                            )}
                             {part.unit && <p>Unit: {part.unit}</p>}
                           </li>
                         ))}

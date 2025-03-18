@@ -6,6 +6,7 @@ import axios from "axios";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
 import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 
 interface Part {
   id: string;
@@ -55,7 +56,11 @@ const EditProduct = () => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
-  const handlePartChange = (index: number, key: keyof Part, value: any) => {
+  const handlePartChange = (
+    index: number,
+    key: keyof Part,
+    value: number | string
+  ) => {
     const updatedParts = product.parts.map((part, i) =>
       i === index ? { ...part, [key]: value } : part
     );
@@ -99,7 +104,7 @@ const EditProduct = () => {
     setError("");
 
     try {
-      let updatedProduct = { ...product };
+      const updatedProduct = { ...product };
 
       if (imageFile) {
         const formData = new FormData();
@@ -144,16 +149,19 @@ const EditProduct = () => {
 
         <h1 className="text-3xl font-bold text-gray-800">Edit Product</h1>
 
-        {error && <p className="text-red-500 bg-red-100 p-2 rounded">{error}</p>}
+        {error && (
+          <p className="text-red-500 bg-red-100 p-2 rounded">{error}</p>
+        )}
 
         {loading ? (
           <p className="text-gray-500">Loading...</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-8">
-            
             {/* Product Name */}
             <div>
-              <label className="block text-lg font-semibold">Product Name:</label>
+              <label className="block text-lg font-semibold">
+                Product Name:
+              </label>
               <input
                 type="text"
                 name="name"
@@ -165,7 +173,9 @@ const EditProduct = () => {
 
             {/* Image Upload & Preview */}
             <div>
-              <label className="block text-lg font-semibold">Upload New Image:</label>
+              <label className="block text-lg font-semibold">
+                Upload New Image:
+              </label>
               <div
                 className="border-2 border-dashed border-orange-400 rounded-lg p-4 text-center cursor-pointer bg-orange-50 hover:bg-orange-100"
                 onDragOver={handleDragOver}
@@ -185,10 +195,12 @@ const EditProduct = () => {
               {imagePreview && (
                 <div className="mt-4">
                   <p className="text-sm text-gray-600">Current Image:</p>
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Product Preview"
-                    className="w-48 h-48 object-cover rounded-lg shadow"
+                    width={192} // 48 * 4 (Tailwind w-48 = 192px)
+                    height={192} // 48 * 4 (Tailwind h-48 = 192px)
+                    className="object-cover rounded-lg shadow"
                   />
                 </div>
               )}
@@ -198,32 +210,39 @@ const EditProduct = () => {
             <div>
               <h2 className="text-xl font-semibold">Parts:</h2>
               {product.parts.map((part, index) => (
-                <div key={part.id || index} className="border p-4 rounded-lg bg-gray-50 mb-6">
+                <div
+                  key={part.id || index}
+                  className="border p-4 rounded-lg bg-gray-50 mb-6"
+                >
                   <label className="block font-semibold">Part Name:</label>
                   <input
                     type="text"
                     value={part.name}
-                    onChange={(e) => handlePartChange(index, "name", e.target.value)}
+                    onChange={(e) =>
+                      handlePartChange(index, "name", e.target.value)
+                    }
                     className="w-full p-2 border rounded-lg mb-4"
                   />
                   <div>
-                      <label className="block font-semibold">Motion Type:</label>
-                      <select
-                        value={part.motionType}
-                        onChange={(e) =>
-                          handlePartChange(index, "motionType", e.target.value as "LINEAR" | "ROTARY")
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        <option value="LINEAR">LINEAR</option>
-                        <option value="ROTARY">ROTARY</option>
-                      </select>
-                    </div>
+                    <label className="block font-semibold">Motion Type:</label>
+                    <select
+                      value={part.motionType}
+                      onChange={(e) =>
+                        handlePartChange(
+                          index,
+                          "motionType",
+                          e.target.value as "LINEAR" | "ROTARY"
+                        )
+                      }
+                      className="w-full p-2 border rounded-lg"
+                    >
+                      <option value="LINEAR">LINEAR</option>
+                      <option value="ROTARY">ROTARY</option>
+                    </select>
+                  </div>
                   {/* Motion Type, Pos1, Pos2, and Unit in the same row */}
                   <div className="grid grid-cols-4 gap-4">
-                    
                     {/* Motion Type */}
-                    
 
                     {/* Position Fields */}
                     <div>
@@ -232,7 +251,13 @@ const EditProduct = () => {
                         type="number"
                         value={part.pos1 || ""}
                         placeholder="0"
-                        onChange={(e) => handlePartChange(index, "pos1", Number(e.target.value))}
+                        onChange={(e) =>
+                          handlePartChange(
+                            index,
+                            "pos1",
+                            Number(e.target.value)
+                          )
+                        }
                         className="w-full p-2 border rounded-lg"
                       />
                     </div>
@@ -242,8 +267,14 @@ const EditProduct = () => {
                       <input
                         type="number"
                         value={part.pos2 || ""}
-                        placeholder="0" 
-                        onChange={(e) => handlePartChange(index, "pos2", Number(e.target.value))}
+                        placeholder="0"
+                        onChange={(e) =>
+                          handlePartChange(
+                            index,
+                            "pos2",
+                            Number(e.target.value)
+                          )
+                        }
                         className="w-full p-2 border rounded-lg"
                       />
                     </div>
@@ -253,7 +284,9 @@ const EditProduct = () => {
                       <label className="block font-semibold">Unit:</label>
                       <select
                         value={part.unit || ""}
-                        onChange={(e) => handlePartChange(index, "unit", e.target.value)}
+                        onChange={(e) =>
+                          handlePartChange(index, "unit", e.target.value)
+                        }
                         className="w-full p-2 border rounded-lg"
                       >
                         {getUnitOptions(part.motionType).map((unit) => (
@@ -265,14 +298,16 @@ const EditProduct = () => {
                     </div>
                   </div>
                   <div>
-                      <label className="block font-semibold">Speed:</label>
-                      <input
-                        type="number"
-                        value={part.speed || ""}
-                        onChange={(e) => handlePartChange(index, "speed", Number(e.target.value))}
-                        className="w-full p-2 border rounded-lg"
-                      />
-                    </div>
+                    <label className="block font-semibold">Speed:</label>
+                    <input
+                      type="number"
+                      value={part.speed || ""}
+                      onChange={(e) =>
+                        handlePartChange(index, "speed", Number(e.target.value))
+                      }
+                      className="w-full p-2 border rounded-lg"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
