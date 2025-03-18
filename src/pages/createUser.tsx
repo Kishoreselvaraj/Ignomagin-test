@@ -2,6 +2,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
 
@@ -36,15 +37,18 @@ function SuperUserForm() {
     setLoading(true);
     setMessage("");
 
-    if (!isEditing && password !== confirmPassword) {
+    if (password !== confirmPassword) {
       setMessage("Passwords do not match!");
       setLoading(false);
       return;
     }
 
-    const userData = isEditing
-      ? { username, userId, role }
-      : { username, userId, password, role };
+    const userData = {
+      username,
+      userId,
+      password: password || undefined, // Include password only if it is set
+      role,
+    };
 
     try {
       const response = await fetch(
@@ -75,7 +79,7 @@ function SuperUserForm() {
         router.push("/superuser");
       }, 1500);
     } catch (error) {
-      console.error("Error fetching parts:", error);
+      console.error("Error:", error);
       setMessage(isEditing ? "Failed to update user" : "Failed to create user");
     } finally {
       setLoading(false);
@@ -86,17 +90,29 @@ function SuperUserForm() {
     <div>
       <NavBar />
       <div className="p-6 w-[80%] h-full m-16 font-poppins">
+        
+        {/* Back Button with Arrow */}
+        <button
+          onClick={() => router.push("/superuser")}
+          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-6"
+        >
+          <ArrowLeft size={20} />
+          <span>Back</span>
+        </button>
+
         <h1 className="text-2xl font-bold mb-6">
           {isEditing ? "Edit User" : "Create New User"}
         </h1>
+
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4 items-center">
             <div>
-              <label className="block text-gray-700 font-bold">Username</label>
+              <label className="block text-gray-700 font-bold">Name</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter Name"
                 className="w-full p-2 border rounded-md bg-gray-200"
                 required
               />
@@ -106,6 +122,7 @@ function SuperUserForm() {
               <input
                 type="text"
                 value={userId}
+                placeholder="Enter User ID"
                 onChange={(e) => setUserId(e.target.value)}
                 className="w-full p-2 border rounded-md bg-gray-200"
                 required
@@ -115,37 +132,35 @@ function SuperUserForm() {
 
           <br />
 
-          {!isEditing && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-bold">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-2 border rounded-md bg-gray-200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-bold">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full p-2 border rounded-md bg-gray-200"
-                    required
-                  />
-                </div>
-              </div>
-              <br />
-            </>
-          )}
+          {/* Password Fields for Both Creating and Editing */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-700 font-bold">Password</label>
+              <input
+                type="password"
+                value={password}
+                placeholder="Enter Password"
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border rounded-md bg-gray-200"
+                required={!isEditing}  // Required only when creating
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-bold">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                placeholder="Confirm Password"
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full p-2 border rounded-md bg-gray-200"
+                required={!isEditing}  // Required only when creating
+              />
+            </div>
+          </div>
+
+          <br />
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -167,7 +182,7 @@ function SuperUserForm() {
             <button
               type="submit"
               className={`px-4 py-2 font-bold rounded-md ${
-                loading ? "bg-gray-500" : "bg-blue-600 hover:bg-blue-700"
+                loading ? "bg-gray-500" : "bg-[#ea580c] hover:bg-[#d9530a]"
               } text-white`}
               disabled={loading}
             >

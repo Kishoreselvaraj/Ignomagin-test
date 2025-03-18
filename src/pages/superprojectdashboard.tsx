@@ -12,7 +12,7 @@ interface Part {
   motionType: "LINEAR" | "ROTARY";
   pos1?: number;
   pos2?: number;
-  value?: number;
+  speed?: number;
   unit?: string;
 }
 
@@ -139,7 +139,7 @@ const Superproject = () => {
                             <p><strong>Motion Type:</strong> {part.motionType}</p>
                             {part.pos1 !== undefined && <p>Position 1: {part.pos1}</p>}
                             {part.pos2 !== undefined && <p>Position 2: {part.pos2}</p>}
-                            {part.value !== undefined && <p>Value: {part.value}</p>}
+                            {part.speed !== undefined && <p>speed: {part.speed}</p>}
                             {part.unit && <p>Unit: {part.unit}</p>}
                           </li>
                         ))}

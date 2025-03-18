@@ -42,7 +42,7 @@ model Part {
   pos1       Int?     // Nullable, required only for linear motion
   pos2       Int?     // Nullable, required only for linear motion
   unit      String?  // Nullable, required only for linear motion   
-  value      Int?     // Nullable, required only for rotary motion
+  speed      Int?     // Nullable, required only for rotary motion
 }
 
 enum Motion {

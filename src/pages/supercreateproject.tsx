@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
+import { ArrowLeft } from "lucide-react";
 
 interface Part {
   name: string;
   motionType: "LINEAR" | "ROTARY";
   pos1: number | null;
   pos2: number | null;
-  value?: number | null;
+  speed: number | null;
   unit: string;
 }
 
@@ -19,13 +20,13 @@ const CreateProject = () => {
   const [name, setName] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [parts, setParts] = useState<Part[]>([
-    { name: "", motionType: "LINEAR", pos1: 0, pos2: 0, unit: "MM" },
+    { name: "", motionType: "LINEAR", pos1: null, pos2: null, speed: null, unit: "MM" },
   ]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const addPart = () => {
-    setParts([...parts, { name: "", motionType: "LINEAR", pos1: 0, pos2: 0, unit: "MM" }]);
+    setParts([...parts, { name: "", motionType: "LINEAR", pos1: null, pos2: null, speed: null, unit: "MM" }]);
   };
 
   const removePart = (index: number) => {
@@ -68,7 +69,7 @@ const CreateProject = () => {
             motionType: part.motionType,
             pos1: part.pos1,
             pos2: part.pos2,
-            value: part.motionType === "ROTARY" ? part.value : null,
+            speed: part.speed,
             unit: part.unit,
           };
 
@@ -90,6 +91,18 @@ const CreateProject = () => {
     <div className="h-screen flex flex-col">
       <NavBar />
       <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center">
+
+        {/* Back button */}
+        <div className="self-start mb-4">
+          <button
+            onClick={() => router.push("/productdashboard")}
+            className="flex items-center gap-2 text-orange-500 hover:text-orange-600"
+          >
+            <ArrowLeft size={24} />
+            <span className="text-lg font-semibold">Back to Dashboard</span>
+          </button>
+        </div>
+
         <h1 className="text-2xl font-bold mb-4">Create Product</h1>
 
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md w-1/2">
@@ -159,7 +172,7 @@ const CreateProject = () => {
                 </select>
               </div>
 
-              <div className="flex gap-4 mb-2">
+              <div className="flex gap-4 mb-2 items-center">
                 <input
                   type="number"
                   placeholder="Pos1"
@@ -167,8 +180,9 @@ const CreateProject = () => {
                   onChange={(e) =>
                     setParts(parts.map((p, i) => (i === index ? { ...p, pos1: Number(e.target.value) } : p)))
                   }
-                  className="border p-2 rounded bg-gray-300"
+                  className="border p-2 rounded w-full bg-gray-300"
                 />
+                
                 <input
                   type="number"
                   placeholder="Pos2"
@@ -176,26 +190,42 @@ const CreateProject = () => {
                   onChange={(e) =>
                     setParts(parts.map((p, i) => (i === index ? { ...p, pos2: Number(e.target.value) } : p)))
                   }
-                  className="border p-2 rounded bg-gray-300"
+                  className="border p-2 rounded w-full bg-gray-300"
                 />
+
+                <select
+                  value={part.unit}
+                  onChange={(e) =>
+                    setParts(parts.map((p, i) => (i === index ? { ...p, unit: e.target.value } : p)))
+                  }
+                  className="border p-2 rounded bg-gray-300"
+                >
+                  {part.motionType === "LINEAR" ? (
+                    <>
+                      <option value="MM">MM</option>
+                      <option value="CM">CM</option>
+                    </>
+                  ) : (
+                    <option value="DEG">DEG</option>
+                  )}
+                </select>
               </div>
 
-              <select
-                value={part.unit}
-                onChange={(e) =>
-                  setParts(parts.map((p, i) => (i === index ? { ...p, unit: e.target.value } : p)))
-                }
-                className="border p-2 rounded bg-gray-300"
-              >
-                {part.motionType === "LINEAR" ? (
-                  <>
-                    <option value="MM">MM</option>
-                    <option value="CM">CM</option>
-                  </>
-                ) : (
-                  <option value="DEG">DEG</option>
-                )}
-              </select>
+              {/* Speed Field */}
+              <div className="flex gap-4 items-center mb-2">
+                <input
+                  type="number"
+                  placeholder="Speed"
+                  value={part.speed ?? ""}
+                  onChange={(e) =>
+                    setParts(parts.map((p, i) => (i === index ? { ...p, speed: Number(e.target.value) } : p)))
+                  }
+                  className="border p-2 rounded w-full bg-gray-300"
+                />
+                <span className="text-gray-700">
+                  {part.motionType === "LINEAR" ? "mm/s" : "deg/s"}
+                </span>
+              </div>
             </div>
           ))}
 
@@ -205,7 +235,7 @@ const CreateProject = () => {
 
           <button
             type="submit"
-            className="w-full bg-orange-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-md transition-transform transform hover:scale-105 hover:bg-orange-600 active:scale-95 disabled:opacity-50"
+            className="w-full bg-orange-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-md hover:bg-orange-600 disabled:opacity-50"
             disabled={loading}
           >
             {loading ? "Saving..." : "Save Product"}
