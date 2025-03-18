@@ -17,6 +17,7 @@ interface Part {
 
 const CreateProject = () => {
   const [name, setName] = useState("");
+  const [image, setImage] = useState<File | null>(null);
   const [parts, setParts] = useState<Part[]>([
     { name: "", motionType: "LINEAR", pos1: 0, pos2: 0, unit: "MM" },
   ]);
@@ -31,6 +32,12 @@ const CreateProject = () => {
     setParts(parts.filter((_, i) => i !== index));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -42,7 +49,13 @@ const CreateProject = () => {
     }
 
     try {
-      const productRes = await axios.post("/api/products", { name });
+      const formData = new FormData();
+      formData.append("name", name);
+      if (image) formData.append("image", image);
+
+      const productRes = await axios.post("/api/products", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       const productId = productRes.data.id;
 
       const validParts = parts.filter((part) => part.name.trim() !== "");
@@ -53,13 +66,13 @@ const CreateProject = () => {
             productId,
             name: part.name,
             motionType: part.motionType,
-            pos1: part.motionType === "LINEAR" ? part.pos1 : null,
-            pos2: part.motionType === "LINEAR" ? part.pos2 : null,
+            pos1: part.pos1,
+            pos2: part.pos2,
             value: part.motionType === "ROTARY" ? part.value : null,
-            unit: part.unit || (part.motionType === "ROTARY" ? "DEG" : "MM"),
+            unit: part.unit,
           };
 
-          console.log("Sending data:", payload); // Debugging log
+          console.log("Sending data:", payload);
 
           return axios.post("/api/parts", payload);
         })
@@ -90,6 +103,14 @@ const CreateProject = () => {
             required
           />
 
+          <label className="block mb-2 text-xl font-semibold">Product Image:</label>
+          <input
+            type="file"
+            onChange={handleImageChange}
+            className="border p-2 rounded w-full mb-4 bg-gray-300"
+            accept="image/*"
+          />
+
           <h2 className="text-xl font-semibold mb-2">Parts</h2>
 
           {parts.map((part, index) => (
@@ -98,7 +119,7 @@ const CreateProject = () => {
                 <button
                   type="button"
                   onClick={() => removePart(index)}
-                  className="absolute  top-2 right-2 text-red-500  text-lg"
+                  className="absolute top-2 right-2 text-red-500 text-lg"
                 >
                   ✕
                 </button>
@@ -125,10 +146,7 @@ const CreateProject = () => {
                           ? {
                               ...p,
                               motionType: e.target.value as "LINEAR" | "ROTARY",
-                              unit: e.target.value === "ROTARY" ? "DEG" : "MM", // Reset unit based on motion type
-                              pos1: e.target.value === "LINEAR" ? 0 : null,
-                              pos2: e.target.value === "LINEAR" ? 0 : null,
-                              value: e.target.value === "ROTARY" ? 0 : null,
+                              unit: e.target.value === "ROTARY" ? "DEG" : "MM",
                             }
                           : p
                       )
@@ -141,67 +159,43 @@ const CreateProject = () => {
                 </select>
               </div>
 
-              {part.motionType === "LINEAR" && (
-                <div className="flex gap-4">
-                  <input
-                    type="number"
-                    placeholder="Pos1"
-                    value={part.pos1 || ""}
-                    onChange={(e) =>
-                      setParts(parts.map((p, i) => (i === index ? { ...p, pos1: Number(e.target.value) } : p)))
-                    }
-                    className="border p-2 rounded w-full bg-gray-300"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Pos2"
-                    value={part.pos2 || ""}
-                    onChange={(e) =>
-                      setParts(parts.map((p, i) => (i === index ? { ...p, pos2: Number(e.target.value) } : p)))
-                    }
-                    className="border p-2 rounded w-full bg-gray-300"
-                  />
-                </div>
-              )}
-
-              {part.motionType === "LINEAR" && (
-                <select
-                  value={part.unit}
+              <div className="flex gap-4 mb-2">
+                <input
+                  type="number"
+                  placeholder="Pos1"
+                  value={part.pos1 ?? ""}
                   onChange={(e) =>
-                    setParts(parts.map((p, i) => (i === index ? { ...p, unit: e.target.value } : p)))
+                    setParts(parts.map((p, i) => (i === index ? { ...p, pos1: Number(e.target.value) } : p)))
                   }
-                  className="border p-2 rounded bg-gray-300 w-full mt-2"
-                >
-                  <option value="MM">MM</option>
-                  <option value="CM">CM</option>
-                  <option value="IN">IN</option>
-                </select>
-              )}
+                  className="border p-2 rounded bg-gray-300"
+                />
+                <input
+                  type="number"
+                  placeholder="Pos2"
+                  value={part.pos2 ?? ""}
+                  onChange={(e) =>
+                    setParts(parts.map((p, i) => (i === index ? { ...p, pos2: Number(e.target.value) } : p)))
+                  }
+                  className="border p-2 rounded bg-gray-300"
+                />
+              </div>
 
-              {part.motionType === "ROTARY" && (
-                <div className="flex gap-4">
-                  <input
-                    type="number"
-                    placeholder="Enter Value"
-                    value={part.value || ""}
-                    onChange={(e) =>
-                      setParts(parts.map((p, i) => (i === index ? { ...p, value: Number(e.target.value) } : p)))
-                    }
-                    className="border p-2 rounded w-full bg-gray-300"
-                  />
-
-                  <select
-                    value={part.unit}
-                    onChange={(e) =>
-                      setParts(parts.map((p, i) => (i === index ? { ...p, unit: e.target.value } : p)))
-                    }
-                    className="border p-2 rounded bg-gray-300"
-                  >
-                    <option value="DEG">DEG</option>
-                    <option value="RAD">RAD</option>
-                  </select>
-                </div>
-              )}
+              <select
+                value={part.unit}
+                onChange={(e) =>
+                  setParts(parts.map((p, i) => (i === index ? { ...p, unit: e.target.value } : p)))
+                }
+                className="border p-2 rounded bg-gray-300"
+              >
+                {part.motionType === "LINEAR" ? (
+                  <>
+                    <option value="MM">MM</option>
+                    <option value="CM">CM</option>
+                  </>
+                ) : (
+                  <option value="DEG">DEG</option>
+                )}
+              </select>
             </div>
           ))}
 
