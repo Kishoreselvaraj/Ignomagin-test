@@ -17,7 +17,7 @@ function NavBar() {
   const pathname = usePathname(); // Get current path
 
   return (
-    <div className=" h-[25vh] sticky top-0">
+    <div className=" h-[25vh] sticky top-0 z-10">
       {/* Background Image */}
       <div className="absolute inset-0 bg-[url('/images/navBackground.png')] bg-cover bg-center">
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-black/10"></div>

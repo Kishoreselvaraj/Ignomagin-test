@@ -19,19 +19,44 @@ export default function TaskForm() {
   const [part, setPart] = useState("");
   const [speedUnit, setSpeedUnit] = useState("M/S"); // Default speed unit
   const [testMethod, setTestMethod] = useState("standard"); // standard or custom
-  
+
   // API and UI state
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [products, setProducts] = useState<{ id: string; name: string; parts: { id: string; name: string; motionType?: string; pos1?: string; pos2?: string; speed?: string; unit?: string }[] }[]>([]);
+  const [products, setProducts] = useState<
+    {
+      id: string;
+      name: string;
+      parts: {
+        id: string;
+        name: string;
+        motionType?: string;
+        pos1?: string;
+        pos2?: string;
+        speed?: string;
+        unit?: string;
+      }[];
+    }[]
+  >([]);
   const [selectedProductId, setSelectedProductId] = useState("");
-  const [parts, setParts] = useState<{ id: string; name: string; motionType?: string; pos1?: string; pos2?: string; speed?: string; unit?: string }[]>([]);
+  const [parts, setParts] = useState<
+    {
+      id: string;
+      name: string;
+      motionType?: string;
+      pos1?: string;
+      pos2?: string;
+      speed?: string;
+      unit?: string;
+    }[]
+  >([]);
 
   // Calculate total run time whenever relevant fields change
   useEffect(() => {
     if (runTime && totalCycleCount && cycleCount) {
-      const totalRunTimeValue = 
-        (parseFloat(runTime) * parseFloat(totalCycleCount)) / parseFloat(cycleCount);
+      const totalRunTimeValue =
+        (parseFloat(runTime) * parseFloat(totalCycleCount)) /
+        parseFloat(cycleCount);
       setTotalRunTime(totalRunTimeValue.toFixed(2));
     } else {
       setTotalRunTime("");
@@ -59,7 +84,7 @@ export default function TaskForm() {
     try {
       setLoading(true);
       const response = await fetch("/api/products");
-      console.log(response)
+      console.log(response);
       if (!response.ok) {
         throw new Error("Failed to fetch products");
       }
@@ -77,20 +102,20 @@ export default function TaskForm() {
   const handleProductSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const productId = e.target.value;
     setSelectedProductId(productId);
-    
+
     if (!productId) {
       // Reset form if no product selected
       resetForm();
       return;
     }
-    
-    const selectedProduct = products.find(p => p.id === productId);
+
+    const selectedProduct = products.find((p) => p.id === productId);
     if (selectedProduct) {
       setTaskName(selectedProduct.name || "");
-      
+
       // Reset part selection
       setPart("");
-      
+
       // Reset motion and other part-specific fields
       setMotionType("");
       setPos1("");
@@ -98,7 +123,7 @@ export default function TaskForm() {
       setSpeed("");
       setPosUnit("mm");
       setSpeedUnit("M/S");
-      
+
       // Set available parts for this product
       setParts(selectedProduct.parts || []);
     }
@@ -108,7 +133,7 @@ export default function TaskForm() {
   const handlePartSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedPart = e.target.value;
     setPart(selectedPart);
-    
+
     if (!selectedPart) {
       // Reset part-specific fields if no part selected
       setPos1("");
@@ -119,28 +144,30 @@ export default function TaskForm() {
       setSpeedUnit("M/S");
       return;
     }
-    
+
     // Find the selected product
-    const selectedProduct = products.find(p => p.id === selectedProductId);
-    
+    const selectedProduct = products.find((p) => p.id === selectedProductId);
+
     // Find the part data in the selected product
     if (selectedProduct && selectedProduct.parts) {
-      const partData = selectedProduct.parts.find(p => p.id === selectedPart || p.name === selectedPart);
-      
+      const partData = selectedProduct.parts.find(
+        (p) => p.id === selectedPart || p.name === selectedPart
+      );
+
       if (partData) {
         console.log("Selected part data:", partData);
-        
+
         // Pre-fill form with part data if available
         if (partData.pos1) setPos1(partData.pos1);
         if (partData.pos2) setPos2(partData.pos2);
         if (partData.speed) setSpeed(partData.speed);
-        
+
         // Set motion and adjust units accordingly
         if (partData.motionType) {
           console.log("Setting motion to:", partData.motionType);
           // Set the motion directly
           setMotionType(partData.motionType);
-          
+
           // Update units based on motion type
           if (partData.motionType === "LINEAR") {
             setSpeedUnit("M/S");
@@ -152,7 +179,7 @@ export default function TaskForm() {
         } else {
           console.log("No motion data found for this part");
         }
-        
+
         // Set custom unit if provided
         if (partData.unit) {
           setPosUnit(partData.unit);
@@ -164,10 +191,10 @@ export default function TaskForm() {
   // Reset form fields
   const resetForm = () => {
     setTaskName("");
-    setPos1("");
-    setPos2("");
-    setSpeed("");
-    setCycleCount("");
+    setPos1("0");
+    setPos2("0");
+    setSpeed("0");
+    setCycleCount("0");
     setRunTime("");
     setRestTime("");
     setTotalCycleCount("");
@@ -188,23 +215,30 @@ export default function TaskForm() {
     setMessage("");
 
     const taskData = {
-      taskName,
-      pos1,
-      pos2,
-      posUnit,
-      speed,
-      speedUnit,
-      cycleCount,
-      totalCycleCount,
-      runTime,
-      totalRunTime,
-      restTime,
-      motionType,
-      part,
-      testMethod,
-      productId: selectedProductId,
+      taskName: String(taskName), // Ensure string type
+      part: String(part), // Ensure string type
+      productId: String(selectedProductId), // Ensure string type
+
+      pos1: pos1 != null ? parseFloat(pos1) : null, // Convert to float or set to null
+      pos2: pos2 != null ? parseFloat(pos2) : null, // Convert to float or set to null
+
+      posUnit: posUnit ? String(posUnit) : null, // Ensure string type or null
+
+      speed: speed != null ? parseFloat(speed) : null, // Convert to float or null
+
+      cycleCount: cycleCount != null ? parseFloat(cycleCount) : null, // Convert to float or null
+      totalCycleCount:
+        totalCycleCount != null ? parseFloat(totalCycleCount) : null, // Convert to float or null
+
+      runTime: runTime != null ? parseFloat(runTime) : null, // Convert to float or null
+      totalRunTime: totalRunTime != null ? parseFloat(totalRunTime) : null, // Convert to float or null
+
+      restTime: restTime ? String(restTime) : null, // Ensure string or null
+      motionType: String(motionType), // Ensure string type
+      testMethod: testMethod ? String(testMethod) : null, // Ensure string or null
     };
 
+    console.log("Submitting task data:", taskData);
     try {
       const response = await fetch("/api/task", {
         method: "POST",
@@ -241,15 +275,19 @@ export default function TaskForm() {
     <div>
       <NavBar />
       <div className="p-6 w-[90%] h-full mx-auto my-8 font-poppins">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Create New Task</h2>
-        
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">
+          Create New Task
+        </h2>
+
         {/* Main Form */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <form onSubmit={handleSubmit}>
             {/* Row 1: Product, Part, Test Method */}
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Product Name</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Product Name
+                </label>
                 <select
                   value={selectedProductId}
                   onChange={handleProductSelect}
@@ -264,9 +302,11 @@ export default function TaskForm() {
                   ))}
                 </select>
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Part Name</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Part Name
+                </label>
                 <select
                   value={part}
                   onChange={handlePartSelect}
@@ -276,15 +316,20 @@ export default function TaskForm() {
                 >
                   <option value="">Select Part</option>
                   {parts.map((partOption) => (
-                    <option key={partOption.id || partOption.name} value={partOption.id || partOption.name}>
+                    <option
+                      key={partOption.id || partOption.name}
+                      value={partOption.name} // ✅ Use part name as the value
+                    >
                       {partOption.name}
                     </option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Test Method</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Test Method
+                </label>
                 <select
                   value={testMethod}
                   onChange={(e) => setTestMethod(e.target.value)}
@@ -297,11 +342,13 @@ export default function TaskForm() {
                 </select>
               </div>
             </div>
-            
+
             {/* Row 2: Position 1, Position 2, Motion Type, Position Unit */}
             <div className="grid grid-cols-4 gap-6 mb-6">
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Position 1</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Position 1
+                </label>
                 <input
                   type="number"
                   value={pos1}
@@ -313,9 +360,11 @@ export default function TaskForm() {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Position 2</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Position 2
+                </label>
                 <input
                   type="number"
                   value={pos2}
@@ -327,9 +376,11 @@ export default function TaskForm() {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Motion Type</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Motion Type
+                </label>
                 <select
                   value={motionType}
                   onChange={(e) => setMotionType(e.target.value)}
@@ -344,9 +395,11 @@ export default function TaskForm() {
                   <option value="Rotary">Rotary</option>
                 </select>
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Position Unit</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Position Unit
+                </label>
                 <input
                   type="text"
                   value={posUnit}
@@ -355,11 +408,13 @@ export default function TaskForm() {
                 />
               </div>
             </div>
-            
+
             {/* Row 3: Speed, Speed Unit, Cycle Count, Rest Time */}
             <div className="grid grid-cols-4 gap-6 mb-6">
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Speed</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Speed
+                </label>
                 <input
                   type="number"
                   value={speed}
@@ -371,9 +426,11 @@ export default function TaskForm() {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Speed Unit</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Speed Unit
+                </label>
                 <input
                   type="text"
                   value={speedUnit}
@@ -381,9 +438,11 @@ export default function TaskForm() {
                   readOnly
                 />
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Cycle Count</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Cycle Count
+                </label>
                 <input
                   type="number"
                   value={cycleCount}
@@ -392,9 +451,11 @@ export default function TaskForm() {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Rest Time (min)</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Rest Time (min)
+                </label>
                 <input
                   type="number"
                   value={restTime}
@@ -404,11 +465,13 @@ export default function TaskForm() {
                 />
               </div>
             </div>
-            
+
             {/* Row 4: Run Time, Total Cycles, Total Run Time */}
             <div className="grid grid-cols-3 gap-6 mb-8">
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Run Time (hr)</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Run Time (hr)
+                </label>
                 <input
                   type="number"
                   value={runTime}
@@ -417,9 +480,11 @@ export default function TaskForm() {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Total Cycles</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Total Cycles
+                </label>
                 <input
                   type="number"
                   value={totalCycleCount}
@@ -428,9 +493,11 @@ export default function TaskForm() {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-gray-700 font-bold mb-2">Total Run Time (hr)</label>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Total Run Time (hr)
+                </label>
                 <input
                   type="number"
                   value={totalRunTime}
@@ -439,18 +506,18 @@ export default function TaskForm() {
                 />
               </div>
             </div>
-            
+
             {/* Debug Information */}
-            {process.env.NODE_ENV === 'development' && (
+            {process.env.NODE_ENV === "development" && (
               <div className="mb-4 p-3 bg-gray-100 rounded-md">
                 <h3 className="font-bold">Debug Info:</h3>
-                <p>Motion value: {motionType || 'Not set'}</p>
+                <p>Motion value: {motionType || "Not set"}</p>
                 <p>Test Method: {testMethod}</p>
                 <p>Selected Product ID: {selectedProductId}</p>
                 <p>Selected Part: {part}</p>
               </div>
             )}
-            
+
             {/* Form Controls */}
             <div className="flex justify-between items-center mt-6">
               <button
@@ -460,7 +527,7 @@ export default function TaskForm() {
               >
                 Reset
               </button>
-              
+
               <button
                 type="submit"
                 className={`px-6 py-3 font-bold rounded-md ${
@@ -474,15 +541,19 @@ export default function TaskForm() {
 
             {/* Status Message */}
             {message && (
-              <div className={`mt-4 p-3 rounded-md ${
-                message.includes("success") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-              }`}>
+              <div
+                className={`mt-4 p-3 rounded-md ${
+                  message.includes("success")
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
                 {message}
               </div>
             )}
           </form>
         </div>
-        
+
         {/* Loading State */}
         {loading && products.length === 0 && (
           <div className="text-center p-4 mt-4 bg-blue-50 rounded-md">
