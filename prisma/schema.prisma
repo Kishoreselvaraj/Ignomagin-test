@@ -7,16 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 model Task {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  taskName   String
-  pos1       String
-  pos2       String
-  speed      String
-  cycleCount String
-  runTime    String
-  motion     String
-  part       String
-  createdAt  DateTime @default(now())
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  taskName        String
+  productId       String   // Stored as string instead of reference
+  part            String   // Storing part name instead of ID reference
+  pos1            String
+  pos2            String
+  posUnit         String   @default("mm")
+  speed           String
+  speedUnit       String   @default("M/S")
+  cycleCount      String
+  totalCycleCount String
+  runTime         String
+  totalRunTime    String
+  restTime        String
+  motionType      String
+  testMethod      String   @default("standard")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
   model User {
     id       String @id @default(auto()) @map("_id") @db.ObjectId

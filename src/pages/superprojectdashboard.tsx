@@ -133,7 +133,7 @@ const Superproject = () => {
                       alt={product.name}
                       width={128}   // w-32 = 128px
                       height={128}  // h-32 = 128px
-                      className="object-contain rounded-lg mr-4"
+                      className="object-fit rounded-lg mr-4"
                       priority      // Improves LCP (Largest Contentful Paint) performance
                     />
                     )}
@@ -158,10 +158,10 @@ const Superproject = () => {
                             {part.pos2 !== undefined && (
                               <p>Position 2: {part.pos2}</p>
                             )}
+                            {part.unit && <p>Unit: {part.unit}</p>}
                             {part.speed !== undefined && (
                               <p>speed: {part.speed}</p>
                             )}
-                            {part.unit && <p>Unit: {part.unit}</p>}
                           </li>
                         ))}
                       </ul>

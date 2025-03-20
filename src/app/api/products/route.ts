@@ -80,26 +80,96 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
-
   if (!id) {
     return NextResponse.json({ error: "Product ID required" }, { status: 400 });
   }
-
+  
   try {
-    const { name } = await req.json();
-
-    // Update the product name
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: { name },
+    const productData = await req.json();
+    const { name, imageUrl, parts } = productData;
+    
+    // Start a transaction to update both product and parts
+    const result = await prisma.$transaction(async (prisma) => {
+      // 1. Update the product
+      const updatedProduct = await prisma.product.update({
+        where: { id },
+        data: { 
+          name,
+          imageUrl 
+        },
+      });
+      
+      // 2. Handle parts updates - first get existing parts
+      const existingParts = await prisma.part.findMany({
+        where: { productId: id }
+      });
+      
+      // Create a map of existing part IDs for easier reference
+      const existingPartIds = new Set(existingParts.map(part => part.id));
+      
+      // Process parts if they exist in the request
+      if (Array.isArray(parts)) {
+        // Track which parts we've processed
+        const processedPartIds = new Set();
+        
+        // Update or create each part
+        for (const part of parts) {
+          if (part.id && existingPartIds.has(part.id)) {
+            // Update existing part
+            await prisma.part.update({
+              where: { id: part.id },
+              data: {
+                name: part.name,
+                motionType: part.motionType,
+                pos1: part.pos1 !== undefined ? Number(part.pos1) : null,
+                pos2: part.pos2 !== undefined ? Number(part.pos2) : null,
+                speed: part.speed !== undefined ? Number(part.speed) : null,
+                unit: part.unit
+              }
+            });
+            
+            // Mark as processed
+            processedPartIds.add(part.id);
+          } else {
+            // Create new part
+            await prisma.part.create({
+              data: {
+                productId: id,
+                name: part.name,
+                motionType: part.motionType,
+                pos1: part.pos1 !== undefined ? Number(part.pos1) : null,
+                pos2: part.pos2 !== undefined ? Number(part.pos2) : null,
+                speed: part.speed !== undefined ? Number(part.speed) : null,
+                unit: part.unit
+              }
+            });
+          }
+        }
+        
+        // Delete parts that weren't in the update request
+        for (const existingPart of existingParts) {
+          if (!processedPartIds.has(existingPart.id)) {
+            await prisma.part.delete({
+              where: { id: existingPart.id }
+            });
+          }
+        }
+      }
+      
+      // Return the updated product with its parts
+      return prisma.product.findUnique({
+        where: { id },
+        include: { parts: true }
+      });
     });
-
-    return NextResponse.json(updatedProduct);
+    
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error updating product:", error);
     return NextResponse.json({ error: "Error updating product" }, { status: 500 });
   }
 }
+
 
 // 🟢 DELETE - Remove a Product and Its Associated Parts
 export async function DELETE(req: Request) {
