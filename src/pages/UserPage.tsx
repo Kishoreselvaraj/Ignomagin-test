@@ -9,7 +9,7 @@ import { EyeIcon, EyeOffIcon, ArrowLeft } from "lucide-react"; // Added ArrowLef
 export default function UserPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   const [username, setUsername] = useState("");
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +35,7 @@ export default function UserPage() {
       fetch(`/api/user?id=${searchParams!.get("id")}`)
         .then((res) => res.json())
         .then((data) => {
-          setPassword(data.password); 
+          setPassword(data.password);
         })
         .catch((error) => console.error("Failed to fetch password", error));
     }
@@ -161,7 +161,7 @@ export default function UserPage() {
                 {showPassword ? <EyeIcon /> : <EyeOffIcon />}
               </button>
             </div>
-            
+
             {!isEditing && (
               <div className="relative">
                 <label className="block text-gray-700 font-bold">
@@ -198,7 +198,6 @@ export default function UserPage() {
                 required
               >
                 <option value="operator">Operator</option>
-                <option value="admin">Admin</option>
               </select>
             </div>
           </div>

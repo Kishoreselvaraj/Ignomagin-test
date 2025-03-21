@@ -62,9 +62,19 @@ console.log(role)
   };
 
   // Filter users based on selected role
-  const filteredUsers = users.filter((user) =>
-    filterRole ? user.role.trim().toLowerCase() === filterRole.toLowerCase() : true
-  );
+  const filteredUsers = users.filter((user) => {
+    const normalizedUserRole = user.role.trim().toLowerCase();
+
+    // When filterRole is empty (All Roles selected), show only Admin and Operator
+    if (!filterRole) {
+      return (
+        normalizedUserRole === "admin" || normalizedUserRole === "operator"
+      );
+    }
+
+    // Otherwise, show only the selected role
+    return normalizedUserRole === filterRole.toLowerCase();
+  });
 
   return (
     <div>
