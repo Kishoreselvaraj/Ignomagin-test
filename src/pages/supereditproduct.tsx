@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 
 interface Part {
@@ -44,8 +44,17 @@ const EditProduct = () => {
     setError("");
     try {
       const res = await axios.get(`/api/products?id=${productId}`);
-      setProduct(res.data);
-      setImagePreview(res.data.imageUrl || null);
+      // Ensure parts data is properly formatted
+      const fetchedProduct = res.data;
+
+      // Make sure parts is an array (defensive programming)
+      if (!Array.isArray(fetchedProduct.parts)) {
+        fetchedProduct.parts = [];
+      }
+
+      setProduct(fetchedProduct);
+      setImagePreview(fetchedProduct.imageUrl || null);
+      console.log("Fetched product:", fetchedProduct); // Debug log
     } catch (err) {
       setError("Error fetching product details.");
       console.error(err);
@@ -61,18 +70,53 @@ const EditProduct = () => {
   const handlePartChange = (
     index: number,
     key: keyof Part,
-    value: number | string
+    value: number | string | undefined
   ) => {
-    const updatedParts = product.parts.map((part, i) =>
-      i === index ? { ...part, [key]: value } : part
-    );
+    const updatedParts = [...product.parts]; // Create a new array to ensure React detects the change
+
+    // If the part doesn't exist yet, initialize it
+    if (!updatedParts[index]) {
+      updatedParts[index] = {
+        id: `temp-${index}`,
+        name: "",
+        motionType: "LINEAR",
+      };
+    }
+
+    // Update the specific field
+    updatedParts[index] = { ...updatedParts[index], [key]: value };
 
     // Automatically update the unit based on motion type
     if (key === "motionType") {
       updatedParts[index].unit = value === "LINEAR" ? "mm" : "degrees";
     }
 
+    // Update product with new parts array
     setProduct({ ...product, parts: updatedParts });
+  };
+
+  const handleAddPart = () => {
+    const newPart: Part = {
+      id: `temp-${Date.now()}`, // Temporary ID to be replaced by server
+      name: "New Part",
+      motionType: "LINEAR",
+      unit: "mm", // Default unit for LINEAR
+    };
+
+    setProduct({
+      ...product,
+      parts: [...product.parts, newPart],
+    });
+  };
+
+  const handleRemovePart = (index: number) => {
+    const updatedParts = [...product.parts];
+    updatedParts.splice(index, 1); // Remove the part at specified index
+
+    setProduct({
+      ...product,
+      parts: updatedParts,
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +150,16 @@ const EditProduct = () => {
     setError("");
 
     try {
-      const updatedProduct = { ...product };
+      // Create a deep copy to avoid reference issues
+      const updatedProduct = JSON.parse(JSON.stringify(product));
+
+      // Ensure all part values are in the correct format before submission
+      updatedProduct.parts = updatedProduct.parts.map((part: Part) => ({
+        ...part,
+        pos1: part.pos1 !== undefined ? Number(part.pos1) : undefined,
+        pos2: part.pos2 !== undefined ? Number(part.pos2) : undefined,
+        speed: part.speed !== undefined ? Number(part.speed) : undefined,
+      }));
 
       if (imageFile) {
         const formData = new FormData();
@@ -115,12 +168,20 @@ const EditProduct = () => {
         updatedProduct.imageUrl = uploadRes.data.url;
       }
 
-      await axios.put(`/api/products?id=${id}`, updatedProduct);
+      console.log("Submitting product update:", updatedProduct); // Debug log
+
+      // Make the API call to update the product
+      const response = await axios.put(
+        `/api/products?id=${id}`,
+        updatedProduct
+      );
+      console.log("Update response:", response.data); // Debug log
+
       alert("Product updated successfully!");
       router.push("/productdashboard");
     } catch (err) {
       setError("Error updating product.");
-      console.error(err);
+      console.error("Update error:", err);
     } finally {
       setLoading(false);
     }
@@ -210,22 +271,47 @@ const EditProduct = () => {
 
             {/* Parts Section */}
             <div>
-              <h2 className="text-xl font-semibold">Parts:</h2>
-              {product.parts.map((part, index) => (
-                <div
-                  key={part.id || index}
-                  className="border p-4 rounded-lg bg-gray-50 mb-6"
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Parts:</h2>
+                <button
+                  type="button"
+                  onClick={handleAddPart}
+                  className="flex items-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
                 >
-                  <label className="block font-semibold">Part Name:</label>
-                  <input
-                    type="text"
-                    value={part.name}
-                    onChange={(e) =>
-                      handlePartChange(index, "name", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-lg mb-4"
-                  />
-                  <div>
+                  <Plus size={16} className="mr-2" /> Add Part
+                </button>
+              </div>
+
+              {product.parts.length === 0 ? (
+                <p className="text-gray-500 italic text-center py-4 border border-dashed rounded-lg">
+                  No parts added yet. Click "Add Part" to get started.
+                </p>
+              ) : (
+                product.parts.map((part, index) => (
+                  <div
+                    key={part.id || index}
+                    className="border p-4 rounded-lg bg-gray-50 mb-6 relative"
+                  >
+                    {/* Remove Part Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePart(index)}
+                      className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                      title="Remove Part"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+
+                    <label className="block font-semibold">Part Name:</label>
+                    <input
+                      type="text"
+                      value={part.name}
+                      onChange={(e) =>
+                        handlePartChange(index, "name", e.target.value)
+                      }
+                      className="w-full p-2 border rounded-lg mb-4"
+                    />
+
                     <label className="block font-semibold">Motion Type:</label>
                     <select
                       value={part.motionType}
@@ -236,87 +322,103 @@ const EditProduct = () => {
                           e.target.value as "LINEAR" | "ROTARY"
                         )
                       }
-                      className="w-full p-2 border rounded-lg"
+                      className="w-full p-2 border rounded-lg mb-4"
                     >
                       <option value="LINEAR">LINEAR</option>
                       <option value="ROTARY">ROTARY</option>
                     </select>
-                  </div>
-                  {/* Motion Type, Pos1, Pos2, and Unit in the same row */}
-                  <div className="grid grid-cols-4 gap-4">
-                    {/* Motion Type */}
 
-                    {/* Position Fields */}
-                    <div>
-                      <label className="block font-semibold">Pos 1:</label>
-                      <input
-                        type="number"
-                        value={part.pos1 || ""}
-                        placeholder="0"
-                        onChange={(e) =>
-                          handlePartChange(
-                            index,
-                            "pos1",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      />
-                    </div>
+                    {/* Motion Type, Pos1, Pos2, and Unit in the same row */}
+                    <div className="grid grid-cols-4 gap-4 mb-4">
+                      {/* Position Fields */}
+                      <div>
+                        <label className="block font-semibold">Pos 1:</label>
+                        <input
+                          type="number"
+                          value={part.pos1 !== undefined ? part.pos1 : ""}
+                          placeholder="0"
+                          onChange={(e) =>
+                            handlePartChange(
+                              index,
+                              "pos1",
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value)
+                            )
+                          }
+                          className="w-full p-2 border rounded-lg"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="block font-semibold">Pos 2:</label>
-                      <input
-                        type="number"
-                        value={part.pos2 || ""}
-                        placeholder="0"
-                        onChange={(e) =>
-                          handlePartChange(
-                            index,
-                            "pos2",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      />
-                    </div>
+                      <div>
+                        <label className="block font-semibold">Pos 2:</label>
+                        <input
+                          type="number"
+                          value={part.pos2 !== undefined ? part.pos2 : ""}
+                          placeholder="0"
+                          onChange={(e) =>
+                            handlePartChange(
+                              index,
+                              "pos2",
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value)
+                            )
+                          }
+                          className="w-full p-2 border rounded-lg"
+                        />
+                      </div>
 
-                    {/* Unit */}
-                    <div>
-                      <label className="block font-semibold">Unit:</label>
-                      <select
-                        value={part.unit || ""}
-                        onChange={(e) =>
-                          handlePartChange(index, "unit", e.target.value)
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        {getUnitOptions(part.motionType).map((unit) => (
-                          <option key={unit} value={unit}>
-                            {unit}
-                          </option>
-                        ))}
-                      </select>
+                      {/* Unit */}
+                      <div>
+                        <label className="block font-semibold">Unit:</label>
+                        <select
+                          value={part.unit || ""}
+                          onChange={(e) =>
+                            handlePartChange(index, "unit", e.target.value)
+                          }
+                          className="w-full p-2 border rounded-lg"
+                        >
+                          {getUnitOptions(part.motionType).map((unit) => (
+                            <option key={unit} value={unit}>
+                              {unit}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold">Speed:</label>
+                        <input
+                          type="number"
+                          value={part.speed !== undefined ? part.speed : ""}
+                          placeholder="0"
+                          onChange={(e) =>
+                            handlePartChange(
+                              index,
+                              "speed",
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value)
+                            )
+                          }
+                          className="w-full p-2 border rounded-lg"
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <label className="block font-semibold">Speed:</label>
-                    <input
-                      type="number"
-                      value={part.speed || ""}
-                      onChange={(e) =>
-                        handlePartChange(index, "speed", Number(e.target.value))
-                      }
-                      className="w-full p-2 border rounded-lg"
-                    />
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
-            <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg shadow-lg">
-              Save Changes
-            </button>
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg shadow-lg"
+              >
+                Save Changes
+              </button>
+            </div>
           </form>
         )}
       </div>

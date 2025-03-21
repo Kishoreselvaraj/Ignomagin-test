@@ -2,8 +2,6 @@
   "name": "ignomagin",
   "version": "0.1.0",
   "private": true,
-  "main": "src/app/electron/main.js",
-
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -18,7 +16,7 @@
     "@prisma/client": "^6.4.1",
     "concurrently": "^9.1.2",
     "csv-parser": "^3.2.0",
-    
+    "electron": "^35.0.1",
     "express": "^4.21.2",
     "framer-motion": "^12.5.0",
     "lucide-react": "^0.482.0",
@@ -28,6 +26,7 @@
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-icons": "^5.5.0",
+    "uuid": "^11.1.0",
     "wait-on": "^8.0.3"
   },
   "devDependencies": {
@@ -35,6 +34,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^35.0.1",
     "electron-builder": "^25.1.8",
     "electron": "^35.0.1",
     "eslint": "^9",
@@ -46,24 +46,20 @@
     "typescript": "^5"
   },
   "build": {
-  "appId": "com.yourapp.id",
-  "productName": "MyNextApp",
-  "directories": {
-    "output": "dist"
-  },
-  "files": [
-    "out/",
-    "src/app/electron/main.js",   
-    ".next/**/*",                 
-    "node_modules/**/*",
-    "package.json"
-  ],
-  "win": {
-    "target": "nsis"
-  },
-  "mac": {
-    "target": "dmg"
+    "appId": "com.yourapp.id",
+    "productName": "MyNextApp",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/",
+      "src/app/electron/main.js"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
   }
-}
-
 }
