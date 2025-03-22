@@ -204,6 +204,7 @@ const CreateProject = () => {
                     <>
                       <option value="MM">MM</option>
                       <option value="CM">CM</option>
+                      
                     </>
                   ) : (
                     <option value="DEG">DEG</option>
@@ -223,7 +224,7 @@ const CreateProject = () => {
                   className="border p-2 rounded w-full bg-gray-300"
                 />
                 <span className="text-gray-700">
-                  {part.motionType === "LINEAR" ? "mm/s" : "deg/s"}
+                  {part.motionType === "LINEAR" ? "MS" : "DS"}
                 </span>
               </div>
             </div>

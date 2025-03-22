@@ -6,50 +6,42 @@ import Footer from "../components/Footer";
 export default function TaskForm() {
   // Form state
   const [taskName, setTaskName] = useState("");
-  const [pos1, setPos1] = useState("");
-  const [pos2, setPos2] = useState("");
-  const [speed, setSpeed] = useState("");
-  const [cycleCount, setCycleCount] = useState("");
-  const [runTime, setRunTime] = useState("");
-  const [totalCycleCount, setTotalCycleCount] = useState("");
-  const [totalRunTime, setTotalRunTime] = useState("");
-  const [restTime, setRestTime] = useState("");
-  const [motionType, setMotionType] = useState("");
-  const [posUnit, setPosUnit] = useState("mm"); // Unit for position (mm, cm, etc.)
+  const [pos1, setPos1] = useState("0");
+  const [pos2, setPos2] = useState("0");
+  const [speed, setSpeed] = useState("0");
+  const [cycleCount, setCycleCount] = useState("0");
+  const [runTime, setRunTime] = useState("0");
+  const [totalCycleCount, setTotalCycleCount] = useState("0");
+  const [totalRunTime, setTotalRunTime] = useState("0");
+  const [restTime, setRestTime] = useState("0");
+  const [motionType, setMotionType] = useState("LINEAR");
+  const [posUnit, setPosUnit] = useState("MM"); // Default to MM
   const [part, setPart] = useState("");
-  const [speedUnit, setSpeedUnit] = useState("M/S"); // Default speed unit
-  const [testMethod, setTestMethod] = useState("standard"); // standard or custom
+  const [speedUnit, setSpeedUnit] = useState("MS"); // Default to MS
+  const [testMethod, setTestMethod] = useState("standard"); // Default to standard
 
   // API and UI state
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [products, setProducts] = useState<
-    {
-      id: string;
-      name: string;
-      parts: {
-        id: string;
-        name: string;
-        motionType?: string;
-        pos1?: string;
-        pos2?: string;
-        speed?: string;
-        unit?: string;
-      }[];
-    }[]
-  >([]);
+  interface Product {
+    id: string;
+    name: string;
+    parts: Part[];
+  }
+
+  interface Part {
+    id: string;
+    name: string;
+    pos1?: string;
+    pos2?: string;
+    speed?: string;
+    motionType?: string;
+    unit?: string;
+  }
+
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
-  const [parts, setParts] = useState<
-    {
-      id: string;
-      name: string;
-      motionType?: string;
-      pos1?: string;
-      pos2?: string;
-      speed?: string;
-      unit?: string;
-    }[]
-  >([]);
+  const [parts, setParts] = useState<{}[]>([]);
 
   // Calculate total run time whenever relevant fields change
   useEffect(() => {
@@ -68,23 +60,11 @@ export default function TaskForm() {
     fetchProducts();
   }, []);
 
-  // Update speed unit when motion type changes
-  useEffect(() => {
-    if (motionType === "Linear") {
-      setSpeedUnit("M/S");
-      setPosUnit("mm");
-    } else if (motionType === "Rotary") {
-      setSpeedUnit("DEG/S");
-      setPosUnit("deg");
-    }
-  }, [motionType]);
-
   // Fetch products from backend API
   const fetchProducts = async () => {
     try {
-      setLoading(true);
+      // setLoading(true);
       const response = await fetch("/api/products");
-      console.log(response);
       if (!response.ok) {
         throw new Error("Failed to fetch products");
       }
@@ -93,8 +73,8 @@ export default function TaskForm() {
     } catch (error) {
       console.error("Error fetching products:", error);
       setMessage("Failed to load products.");
-    } finally {
-      setLoading(false);
+      const selectedProduct = products.find((p) => p.id === selectedProductId);
+      // setLoading(false);
     }
   };
 
@@ -109,7 +89,7 @@ export default function TaskForm() {
       return;
     }
 
-    const selectedProduct = products.find((p) => p.id === productId);
+    const selectedProduct = products.find((p: any) => p.id === productId);
     if (selectedProduct) {
       setTaskName(selectedProduct.name || "");
 
@@ -118,11 +98,11 @@ export default function TaskForm() {
 
       // Reset motion and other part-specific fields
       setMotionType("");
-      setPos1("");
-      setPos2("");
-      setSpeed("");
-      setPosUnit("mm");
-      setSpeedUnit("M/S");
+      setPos1("0");
+      setPos2("0");
+      setSpeed("0");
+      setPosUnit("MM");
+      setSpeedUnit("MS");
 
       // Set available parts for this product
       setParts(selectedProduct.parts || []);
@@ -136,51 +116,41 @@ export default function TaskForm() {
 
     if (!selectedPart) {
       // Reset part-specific fields if no part selected
-      setPos1("");
-      setPos2("");
-      setSpeed("");
+      setPos1("0");
+      setPos2("0");
+      setSpeed("0");
       setMotionType("");
-      setPosUnit("mm");
-      setSpeedUnit("M/S");
+      setPosUnit("MM");
+      setSpeedUnit("MS");
       return;
     }
 
-    // Find the selected product
-    const selectedProduct = products.find((p) => p.id === selectedProductId);
+    const selectedProduct = products.find(
+      (p: any) => p.id === selectedProductId
+    );
 
-    // Find the part data in the selected product
     if (selectedProduct && selectedProduct.parts) {
       const partData = selectedProduct.parts.find(
-        (p) => p.id === selectedPart || p.name === selectedPart
+        (p: any) => p.id === selectedPart || p.name === selectedPart
       );
 
       if (partData) {
-        console.log("Selected part data:", partData);
-
-        // Pre-fill form with part data if available
         if (partData.pos1) setPos1(partData.pos1);
         if (partData.pos2) setPos2(partData.pos2);
         if (partData.speed) setSpeed(partData.speed);
 
-        // Set motion and adjust units accordingly
         if (partData.motionType) {
-          console.log("Setting motion to:", partData.motionType);
-          // Set the motion directly
           setMotionType(partData.motionType);
 
-          // Update units based on motion type
           if (partData.motionType === "LINEAR") {
-            setSpeedUnit("M/S");
-            setPosUnit("mm");
+            setSpeedUnit("MS");
+            setPosUnit("MM");
           } else if (partData.motionType === "ROTARY") {
-            setSpeedUnit("DEG/S");
-            setPosUnit("deg");
+            setSpeedUnit("DS");
+            setPosUnit("DEG");
           }
-        } else {
-          console.log("No motion data found for this part");
         }
 
-        // Set custom unit if provided
         if (partData.unit) {
           setPosUnit(partData.unit);
         }
@@ -195,17 +165,17 @@ export default function TaskForm() {
     setPos2("0");
     setSpeed("0");
     setCycleCount("0");
-    setRunTime("");
-    setRestTime("");
-    setTotalCycleCount("");
-    setTotalRunTime("");
-    setMotionType("");
+    setRunTime("0");
+    setRestTime("0");
+    setTotalCycleCount("0");
+    setTotalRunTime("0");
+    setMotionType("LINEAR");
     setPart("");
     setTestMethod("standard");
     setSelectedProductId("");
     setParts([]);
-    setPosUnit("mm");
-    setSpeedUnit("M/S");
+    setPosUnit("MM");
+    setSpeedUnit("MS");
   };
 
   // Form submission
@@ -215,30 +185,24 @@ export default function TaskForm() {
     setMessage("");
 
     const taskData = {
-      taskName: String(taskName), // Ensure string type
-      part: String(part), // Ensure string type
-      productId: String(selectedProductId), // Ensure string type
-
-      pos1: pos1 != null ? parseFloat(pos1) : null, // Convert to float or set to null
-      pos2: pos2 != null ? parseFloat(pos2) : null, // Convert to float or set to null
-
-      posUnit: posUnit ? String(posUnit) : null, // Ensure string type or null
-
-      speed: speed != null ? parseFloat(speed) : null, // Convert to float or null
-
-      cycleCount: cycleCount != null ? parseFloat(cycleCount) : null, // Convert to float or null
-      totalCycleCount:
-        totalCycleCount != null ? parseFloat(totalCycleCount) : null, // Convert to float or null
-
-      runTime: runTime != null ? parseFloat(runTime) : null, // Convert to float or null
-      totalRunTime: totalRunTime != null ? parseFloat(totalRunTime) : null, // Convert to float or null
-
-      restTime: restTime ? String(restTime) : null, // Ensure string or null
-      motionType: String(motionType), // Ensure string type
-      testMethod: testMethod ? String(testMethod) : null, // Ensure string or null
+      taskName: taskName.trim() || "Untitled Task",
+      productId: selectedProductId.trim() || "Unknown",
+      part: part.trim() || "N/A",
+      pos1: parseFloat(pos1),
+      pos2: parseFloat(pos2),
+      posUnit: posUnit.toUpperCase(),
+      speed: parseFloat(speed),
+      speedUnit: speedUnit.toUpperCase(),
+      cycleCount: parseInt(cycleCount),
+      totalCycleCount: parseInt(totalCycleCount),
+      runTime: parseFloat(runTime),
+      totalRunTime: parseFloat(totalRunTime),
+      restTime: parseFloat(restTime),
+      motionType: motionType.toUpperCase(),
+      testMethod: testMethod,
     };
 
-    console.log("Submitting task data:", taskData);
+    console.log("Submitting with form data:", taskData);
     try {
       const response = await fetch("/api/task", {
         method: "POST",
@@ -246,18 +210,47 @@ export default function TaskForm() {
         body: JSON.stringify(taskData),
       });
 
+      let responseData;
       const textResponse = await response.text();
-      console.log("Raw API Response:", textResponse);
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${textResponse}`);
-      }
 
       try {
-        const jsonResponse = JSON.parse(textResponse);
-        console.log("Parsed JSON Response:", jsonResponse);
-      } catch (parseError) {
-        console.warn("Response is not valid JSON:", textResponse);
+        responseData = JSON.parse(textResponse);
+      } catch (e) {
+        responseData = { message: textResponse };
+      }
+
+      console.log("API Response:", responseData);
+
+      if (!response.ok) {
+        if (response.status === 400) {
+          throw new Error(
+            `Validation error: ${
+              responseData.error || responseData.message || "Check your inputs"
+            }`
+          );
+        } else if (response.status === 409) {
+          throw new Error(
+            `Duplicate record: ${
+              responseData.error ||
+              responseData.message ||
+              "This task already exists"
+            }`
+          );
+        } else if (response.status === 500) {
+          throw new Error(
+            `Server error: ${
+              responseData.error ||
+              responseData.message ||
+              "Please try again later"
+            }`
+          );
+        } else {
+          throw new Error(
+            `API Error (${response.status}): ${
+              responseData.error || responseData.message
+            }`
+          );
+        }
       }
 
       alert("Task added successfully!");
@@ -265,7 +258,11 @@ export default function TaskForm() {
       setMessage("Task submitted successfully!");
     } catch (error) {
       console.error("Fetch Error:", error);
-      setMessage("Failed to submit task.");
+      setMessage(
+        `Failed to submit task: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -279,10 +276,8 @@ export default function TaskForm() {
           Create New Task
         </h2>
 
-        {/* Main Form */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-slate-200 p-6 rounded-lg shadow-md">
           <form onSubmit={handleSubmit}>
-            {/* Row 1: Product, Part, Test Method */}
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
@@ -295,7 +290,7 @@ export default function TaskForm() {
                   required
                 >
                   <option value="">Select a Product</option>
-                  {products.map((product) => (
+                  {products.map((product: any) => (
                     <option key={product.id} value={product.id}>
                       {product.name}
                     </option>
@@ -315,10 +310,10 @@ export default function TaskForm() {
                   disabled={!selectedProductId}
                 >
                   <option value="">Select Part</option>
-                  {parts.map((partOption) => (
+                  {parts.map((partOption: any) => (
                     <option
                       key={partOption.id || partOption.name}
-                      value={partOption.name} // ✅ Use part name as the value
+                      value={partOption.name}
                     >
                       {partOption.name}
                     </option>
@@ -343,7 +338,6 @@ export default function TaskForm() {
               </div>
             </div>
 
-            {/* Row 2: Position 1, Position 2, Motion Type, Position Unit */}
             <div className="grid grid-cols-4 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
@@ -390,9 +384,8 @@ export default function TaskForm() {
                   required
                   disabled={testMethod === "standard"}
                 >
-                  <option value="">{motionType}</option>
-                  <option value="Linear">Linear</option>
-                  <option value="Rotary">Rotary</option>
+                  <option value="LINEAR">Linear</option>
+                  <option value="ROTARY">Rotary</option>
                 </select>
               </div>
 
@@ -400,16 +393,31 @@ export default function TaskForm() {
                 <label className="block text-gray-700 font-bold mb-2">
                   Position Unit
                 </label>
-                <input
-                  type="text"
+                <select
                   value={posUnit}
-                  readOnly
-                  className="w-full p-3 border rounded-md shadow-sm bg-gray-100"
-                />
+                  onChange={(e) => setPosUnit(e.target.value)}
+                  className="w-full p-3 border rounded-md shadow-sm"
+                  required
+                >
+                  {motionType === "LINEAR" ? (
+                    <>
+                      <option value="MM">MM</option>
+                      <option value="CM">CM</option>
+                      <option value="M">M</option>
+                      {/* <option value="KM">KM</option> */}
+                    </>
+                  ) : motionType === "ROTARY" ? (
+                    <>
+                      <option value="DEG">DEG</option>
+                      <option value="RAD">RAD</option>
+                    </>
+                  ) : (
+                    <option value="MM">MM</option>
+                  )}
+                </select>
               </div>
             </div>
 
-            {/* Row 3: Speed, Speed Unit, Cycle Count, Rest Time */}
             <div className="grid grid-cols-4 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
@@ -431,12 +439,25 @@ export default function TaskForm() {
                 <label className="block text-gray-700 font-bold mb-2">
                   Speed Unit
                 </label>
-                <input
-                  type="text"
+                <select
                   value={speedUnit}
-                  className="w-full p-3 border rounded-md shadow-sm bg-gray-100"
-                  readOnly
-                />
+                  onChange={(e) => setSpeedUnit(e.target.value)}
+                  className="w-full p-3 border rounded-md shadow-sm"
+                  required
+                >
+                  {motionType === "LINEAR" ? (
+                    <>
+                      <option value="MS">MS</option>
+                     
+                    </>
+                  ) : motionType === "ROTARY" ? (
+                    <>
+                      <option value="DS">DS</option>
+                    </>
+                  ) : (
+                    <option value="MS">MS</option>
+                  )}
+                </select>
               </div>
 
               <div>
@@ -466,7 +487,6 @@ export default function TaskForm() {
               </div>
             </div>
 
-            {/* Row 4: Run Time, Total Cycles, Total Run Time */}
             <div className="grid grid-cols-3 gap-6 mb-8">
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
@@ -507,18 +527,6 @@ export default function TaskForm() {
               </div>
             </div>
 
-            {/* Debug Information */}
-            {process.env.NODE_ENV === "development" && (
-              <div className="mb-4 p-3 bg-gray-100 rounded-md">
-                <h3 className="font-bold">Debug Info:</h3>
-                <p>Motion value: {motionType || "Not set"}</p>
-                <p>Test Method: {testMethod}</p>
-                <p>Selected Product ID: {selectedProductId}</p>
-                <p>Selected Part: {part}</p>
-              </div>
-            )}
-
-            {/* Form Controls */}
             <div className="flex justify-between items-center mt-6">
               <button
                 type="button"
@@ -539,7 +547,6 @@ export default function TaskForm() {
               </button>
             </div>
 
-            {/* Status Message */}
             {message && (
               <div
                 className={`mt-4 p-3 rounded-md ${
@@ -554,7 +561,6 @@ export default function TaskForm() {
           </form>
         </div>
 
-        {/* Loading State */}
         {loading && products.length === 0 && (
           <div className="text-center p-4 mt-4 bg-blue-50 rounded-md">
             <p className="text-blue-800">Loading products...</p>

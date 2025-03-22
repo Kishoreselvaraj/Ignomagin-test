@@ -88,7 +88,7 @@ const EditProduct = () => {
 
     // Automatically update the unit based on motion type
     if (key === "motionType") {
-      updatedParts[index].unit = value === "LINEAR" ? "mm" : "degrees";
+      updatedParts[index].unit = value === "LINEAR" ? "MM" : "DEG";
     }
 
     // Update product with new parts array
@@ -190,8 +190,8 @@ const EditProduct = () => {
   // Dynamic unit options based on motion type
   const getUnitOptions = (motionType: "LINEAR" | "ROTARY") => {
     return motionType === "LINEAR"
-      ? ["mm", "cm", "m"]
-      : ["degrees", "radians", "rev/min"];
+      ? ["MM", "CM", "M"]
+      : ["DEG", "RAD"];
   };
 
   return (

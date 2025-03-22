@@ -10,26 +10,40 @@ enum Unit {
   MM
   CM
   M
-  KM
+  DEG
+  RAD
 }
 
 enum SpeedUnit {
-  MS
-  KMH
+  MS    // meters per second
+  DS   // degree per hour
 }
 
+
 model Task {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  taskName   String
-  pos1       String
-  pos2       String
-  speed      String
-  cycleCount String
-  runTime    String
-  motion     String
-  part       String
-  createdAt  DateTime @default(now())
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt        DateTime  @default(now())
+  // updatedAt         DateTime    @default(now()) @updatedAt
+  cycleCount       Int
+  motionType       String    // ✅ Added new field for motion
+  part             String
+  pos1             Float
+  pos2             Float
+  posUnit          Unit      // ✅ Store units as strings
+  productId        String    // ✅ Use String for UUID consistency
+  restTime         Int       // ✅ Added new field
+  runTime          Int
+  speed            Float
+  speedUnit        SpeedUnit // ✅ Added speedUnit field
+  taskName         String
+  testMethod       String    // ✅ Added new field
+  totalCycleCount  Int       // ✅ Added new field
+  totalRunTime     Float       // ✅ Added new field
 }
+
+
+
+
 model User {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
   username String @unique
