@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
+import { motion } from "framer-motion";
 
 interface Task {
   id: string;
@@ -30,19 +31,22 @@ function TaskEdit() {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const params = useParams();
+  const id = params ? params.id : null; // Get the id from the path
 
   useEffect(() => {
     const fetchTask = async () => {
-      const id = searchParams?.get("id");
+      console.log("Task ID:", id);
       if (!id) {
         console.error("No task ID provided in the URL.");
         setMessage("Failed to load task: No task ID provided.");
         return;
       }
-  
+
       try {
         setLoading(true);
         const res = await fetch(`/api/task?id=${id}`);
+        console.log("Task data fetched successfully:", res);
         if (!res.ok) {
           throw new Error("Failed to fetch task");
         }
@@ -56,48 +60,111 @@ function TaskEdit() {
         setLoading(false);
       }
     };
-  
+
     fetchTask();
-  }, [searchParams]);
+  }, [id]); // Dependency should be `id` instead of `searchParams`
+
+  const handleMotionTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMotionType = e.target.value;
+    setTask((prevTask) => {
+      if (!prevTask) return null;
+      return {
+        ...prevTask,
+        motionType: newMotionType,
+        posUnit: newMotionType === "LINEAR" ? "MM" : "DEG",
+        speedUnit: newMotionType === "LINEAR" ? "MS" : "DS",
+      };
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!task) return;
-
+  
     const updatedTask = {
-      ...task,
-      taskName: e.currentTarget.taskName.value,
-      productId: e.currentTarget.productId.value,
-      part: e.currentTarget.part.value,
-      pos1: e.currentTarget.pos1.value,
-      pos2: e.currentTarget.pos2.value,
-      posUnit: e.currentTarget.posUnit.value,
-      speed: e.currentTarget.speed.value,
-      speedUnit: e.currentTarget.speedUnit.value,
-      cycleCount: e.currentTarget.cycleCount.value,
-      totalCycleCount: e.currentTarget.totalCycleCount.value,
-      runTime: e.currentTarget.runTime.value,
-      totalRunTime: e.currentTarget.totalRunTime.value,
-      restTime: e.currentTarget.restTime.value,
-      motionType: e.currentTarget.motionType.value,
-      testMethod: e.currentTarget.testMethod.value,
+      id: task.id,
+      taskName:
+        (document.querySelector('input[name="taskName"]') as HTMLInputElement)
+          ?.value || "",
+      productId:
+        (document.querySelector('input[name="productId"]') as HTMLInputElement)
+          ?.value || "",
+      part:
+        (document.querySelector('input[name="part"]') as HTMLInputElement)
+          ?.value || "",
+      pos1: parseFloat(
+        (document.querySelector('input[name="pos1"]') as HTMLInputElement)?.value || "0"
+      ),
+      pos2: parseFloat(
+        (document.querySelector('input[name="pos2"]') as HTMLInputElement)?.value || "0"
+      ),
+      posUnit:
+        (document.querySelector('select[name="posUnit"]') as HTMLSelectElement)
+          ?.value || "",
+      speed: parseFloat(
+        (document.querySelector('input[name="speed"]') as HTMLInputElement)?.value || "0"
+      ),
+      speedUnit:
+        (
+          document.querySelector(
+            'select[name="speedUnit"]'
+          ) as HTMLSelectElement
+        )?.value || "",
+      cycleCount: parseInt(
+        (document.querySelector('input[name="cycleCount"]') as HTMLInputElement)?.value || "0"
+      ),
+      totalCycleCount: parseInt(
+        (document.querySelector('input[name="totalCycleCount"]') as HTMLInputElement)?.value || "0"
+      ),
+      runTime: parseFloat(
+        (document.querySelector('input[name="runTime"]') as HTMLInputElement)?.value || "0"
+      ),
+      totalRunTime: parseFloat(
+        (document.querySelector('input[name="totalRunTime"]') as HTMLInputElement)?.value || "0"
+      ),
+      restTime: parseFloat(
+        (document.querySelector('input[name="restTime"]') as HTMLInputElement)?.value || "0"
+      ),
+      motionType:
+        (
+          document.querySelector(
+            'select[name="motionType"]'
+          ) as HTMLSelectElement
+        )?.value || "",
+      testMethod:
+        (
+          document.querySelector(
+            'select[name="testMethod"]'
+          ) as HTMLSelectElement
+        )?.value || "",
     };
-
+    console.log("Updated Task:", updatedTask);
+  
     try {
       setLoading(true);
-      const response = await fetch(`/api/task?id=${task.id}`, {
+      const response = await fetch(`/api/task`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedTask),
       });
-
+      console.log("Task updated successfully:", response);
+  
       if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (error) {
+          console.error("Failed to parse JSON from response:", error);
+          errorData = { error: "Unexpected response from server" };
+        }
+        console.error("Error updating task:", errorData);
+        setMessage(`Failed to update task: ${errorData.error || "Unknown error"}`);
         throw new Error("Failed to update task");
       }
-
+      alert("Task updated successfully!");
       setMessage("Task updated successfully!");
       setTimeout(() => {
-        router.push("/tasks");
+        router.push("/home");
       }, 1500);
     } catch (error) {
       console.error("Error updating task:", error);
@@ -112,7 +179,7 @@ function TaskEdit() {
       <NavBar />
       <div className="p-6 w-[80%] h-full m-16 font-poppins">
         <button
-          onClick={() => router.push("/tasks")}
+          onClick={() => router.push("/home")}
           className="flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-6"
         >
           <ArrowLeft size={20} />
@@ -137,20 +204,6 @@ function TaskEdit() {
                   name="taskName"
                   defaultValue={task?.taskName || ""}
                   placeholder="Enter Task Name"
-                  className="w-full p-3 border rounded-md shadow-sm"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-bold mb-2">
-                  Product ID
-                </label>
-                <input
-                  type="text"
-                  name="productId"
-                  defaultValue={task?.productId || ""}
-                  placeholder="Enter Product ID"
                   className="w-full p-3 border rounded-md shadow-sm"
                   required
                 />
@@ -210,12 +263,39 @@ function TaskEdit() {
                   className="w-full p-3 border rounded-md shadow-sm"
                   required
                 >
-                  <option value="MM">MM</option>
-                  <option value="CM">CM</option>
-                  <option value="M">M</option>
+                  {task?.motionType === "LINEAR" && (
+                    <>
+                      <option value="MM">MM</option>
+                      <option value="CM">CM</option>
+                      <option value="M">M</option>
+                    </>
+                  )}
+                  {task?.motionType === "ROTARY" && (
+                    <>
+                      <option value="DEG">DEG</option>
+                      <option value="RAD">RAD</option>
+                    </>
+                  )}
                 </select>
               </div>
+              <div>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Motion Type
+                </label>
+                <select
+                  name="motionType"
+                  defaultValue={task?.motionType || "LINEAR"}
+                  className="w-full p-3 border rounded-md shadow-sm"
+                  required
+                  onChange={handleMotionTypeChange}
+                >
+                  <option value="LINEAR">Linear</option>
+                  <option value="ROTARY">Rotary</option>
+                </select>
+              </div>
+            </div>
 
+            <div className="grid grid-cols-4 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
                   Speed
@@ -229,9 +309,6 @@ function TaskEdit() {
                   required
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-4 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
                   Speed Unit
@@ -242,8 +319,12 @@ function TaskEdit() {
                   className="w-full p-3 border rounded-md shadow-sm"
                   required
                 >
-                  <option value="MS">MS</option>
-                  <option value="KMH">KMH</option>
+                  {task?.motionType === "LINEAR" && (
+                    <option value="MS">MS</option>
+                  )}
+                  {task?.motionType === "ROTARY" && (
+                    <option value="DS">DS</option>
+                  )}
                 </select>
               </div>
 
@@ -256,20 +337,6 @@ function TaskEdit() {
                   name="cycleCount"
                   defaultValue={task?.cycleCount || ""}
                   placeholder="Enter Cycle Count"
-                  className="w-full p-3 border rounded-md shadow-sm"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-bold mb-2">
-                  Run Time (hr)
-                </label>
-                <input
-                  type="number"
-                  name="runTime"
-                  defaultValue={task?.runTime || ""}
-                  placeholder="Enter Run Time"
                   className="w-full p-3 border rounded-md shadow-sm"
                   required
                 />
@@ -291,6 +358,19 @@ function TaskEdit() {
             </div>
 
             <div className="grid grid-cols-4 gap-6 mb-6">
+              <div>
+                <label className="block text-gray-700 font-bold mb-2">
+                  Run Time (hr)
+                </label>
+                <input
+                  type="number"
+                  name="runTime"
+                  defaultValue={task?.runTime || ""}
+                  placeholder="Enter Run Time"
+                  className="w-full p-3 border rounded-md shadow-sm"
+                  required
+                />
+              </div>
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
                   Total Run Time (hr)
@@ -321,21 +401,6 @@ function TaskEdit() {
 
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
-                  Motion Type
-                </label>
-                <select
-                  name="motionType"
-                  defaultValue={task?.motionType || "LINEAR"}
-                  className="w-full p-3 border rounded-md shadow-sm"
-                  required
-                >
-                  <option value="LINEAR">Linear</option>
-                  <option value="ROTARY">Rotary</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-bold mb-2">
                   Test Method
                 </label>
                 <select
@@ -362,7 +427,7 @@ function TaskEdit() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push("/tasks")}
+                onClick={() => router.push("/home")}
                 className="px-4 py-2 font-bold rounded-md bg-gray-500 hover:bg-gray-600 text-white"
               >
                 Cancel
