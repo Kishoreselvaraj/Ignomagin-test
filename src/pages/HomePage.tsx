@@ -1,4 +1,5 @@
-"use client";
+'use client'; // Ensure this is a client component
+// HomePage.tsx
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PlayIcon, PauseIcon, StopIcon } from "@heroicons/react/24/solid";
@@ -13,6 +14,10 @@ interface Task {
   part?: string;
   etc?: string;
   testMethod?: string;
+  pos1?: string; // Add position properties
+  pos2?: string;
+  totalCycle?: string;
+  currentCycle?: string;
 }
 
 function HomePage() {
@@ -89,41 +94,127 @@ function HomePage() {
     }
   }, [currentCycle, selectedTask]);
 
-  const handleTaskClick = (task: Task) => {
+  const handleTaskClick = async (task: Task) => {
     setSelectedTask(task);
     setCurrentCycle(0);
     setIsRunning(false);
 
     const initialETC = parseInt(task.etc?.split(" ")[0] || "0", 10);
     setRemainingETC(initialETC);
+
+    // Update CSV file
+    await fetch('/api/taskcsv', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'stop', // Initial state
+        task: {
+          part: task.part || 'Unknown Part',
+          pos1: task.pos1 || '0',
+          pos2: task.pos2 || '0',
+          totalCycle: task.cycleCount || '0',
+          currentCycle: '0',
+        },
+      }),
+    });
+  };
+
+  const handleRunClick = async () => {
+    setIsRunning(true);
+
+    // Update CSV file
+    await fetch('/api/taskcsv', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'running',
+        task: {
+          part: selectedTask?.part || 'Unknown Part',
+          pos1: selectedTask?.pos1 || '0',
+          pos2: selectedTask?.pos2 || '0',
+          totalCycle: selectedTask?.cycleCount || '0',
+          currentCycle: `${currentCycle}`,
+        },
+      }),
+    });
+  };
+
+  const handlePauseClick = async () => {
+    setIsRunning(false);
+
+    // Update CSV file
+    await fetch('/api/taskcsv', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'pause',
+        task: {
+          part: selectedTask?.part || 'Unknown Part',
+          pos1: selectedTask?.pos1 || '0',
+          pos2: selectedTask?.pos2 || '0',
+          totalCycle: selectedTask?.cycleCount || '0',
+          currentCycle: `${currentCycle}`,
+        },
+      }),
+    });
+  };
+
+  const handleStopClick = async () => {
+    setIsRunning(false);
+    setCurrentCycle(0);
+    setRemainingETC(parseInt(selectedTask?.etc?.split(" ")[0] || "0", 10));
+
+    // Update CSV file
+    await fetch('/api/taskcsv', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'stop',
+        task: {
+          part: selectedTask?.part || 'Unknown Part',
+          pos1: selectedTask?.pos1 || '0',
+          pos2: selectedTask?.pos2 || '0',
+          totalCycle: selectedTask?.cycleCount || '0',
+          currentCycle: '0',
+        },
+      }),
+    });
   };
 
   const handleEditClick = (id: string) => {
     const task = tasks.find((t) => t.id === id);
-    if (task?.testMethod === "standard") {
-      alert("Standard method cannot be edited.");
-    } else {
+    // if (task?.testMethod === "standard") {
+    //   alert("Standard method cannot be edited.");
+    // } else {
       // Redirect to the edit page with the task ID
       window.location.href = `/editTask/${id}`;
-    }
+    // }
   };
 
-  const handleDeleteClick = async (taskId: string) => {
-    try {
-      const response = await fetch(`/api/task?id=${taskId}`, {
-        method: "DELETE",
-      });
+  // const handleDeleteClick = async (taskId: string) => {
+  //   try {
+  //     const response = await fetch(`/api/task?id=${taskId}`, {
+  //       method: "DELETE",
+  //     });
 
-      if (response.ok) {
-        // Remove the task from the list
-        setTasks(tasks.filter((task) => task.id !== taskId));
-      } else {
-        console.error("Failed to delete task");
-      }
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
-  };
+  //     if (response.ok) {
+  //       // Remove the task from the list
+  //       setTasks(tasks.filter((task) => task.id !== taskId));
+  //     } else {
+  //       console.error("Failed to delete task");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error deleting task:", error);
+  //   }
+  // };
 
   const handleCheckboxChange = (taskId: string) => {
     setSelectedTasks((prevSelected) =>
@@ -142,8 +233,10 @@ function HomePage() {
       <NavBar />
       <div className="p-8 h-screen font-poppins">
         <h1 className="text-2xl font-bold mb-4 text-[#DA7534] flex justify-center">
-          Current Task
+          {isRunning ? "Manual Test" : "Current Task"}
         </h1>
+
+        
 
         {/* Dashboard Fields */}
         <div className="grid grid-cols-3 gap-6 p-4">
@@ -157,7 +250,9 @@ function HomePage() {
                 {truncateText(selectedTask?.taskName || "Select a task", 20)}
               </div>
             </div>
-            <div className="flex items-center">
+            {!isRunning && (
+              <>
+              <div className="flex items-center">
               <label className="w-24 font-bold text-[#DA7534]">
                 Start Date:
               </label>
@@ -167,6 +262,9 @@ function HomePage() {
                   : "N/A"}
               </div>
             </div>
+              </>
+            )}
+            
           </div>
 
           {/* Second Column (Buttons) */}
@@ -174,26 +272,20 @@ function HomePage() {
             <div className="flex gap-4">
               <button
                 className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-blue-600"
-                onClick={() => setIsRunning(true)}
+                onClick={handleRunClick}
                 disabled={isRunning}
               >
                 <PlayIcon className="h-6 w-6" />
               </button>
               <button
                 className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-yellow-600"
-                onClick={() => setIsRunning(false)}
+                onClick={handlePauseClick}
               >
                 <PauseIcon className="h-6 w-6" />
               </button>
               <button
                 className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-red-600"
-                onClick={() => {
-                  setIsRunning(false);
-                  setCurrentCycle(0);
-                  setRemainingETC(
-                    parseInt(selectedTask?.etc?.split(" ")[0] || "0", 10)
-                  );
-                }}
+                onClick={handleStopClick}
               >
                 <StopIcon className="h-6 w-6" />
               </button>
@@ -208,30 +300,35 @@ function HomePage() {
                 {truncateText(selectedTask?.part || "N/A", 20)}
               </div>
             </div>
-            <div className="flex items-center">
-              <label className="w-24 font-bold text-[#DA7534]">ETC:</label>
-              <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
+            {!isRunning && (
+              <>
+              <div className="flex items-center">
+                <label className="w-24 font-bold text-[#DA7534]">ETC:</label>
+                <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
                 {remainingETC.toFixed(2)} hrs
+                </div>
               </div>
-            </div>
-            <div className="flex items-center">
-              <label className="w-24 font-bold text-[#DA7534]">Cycle:</label>
-              <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
+              <div className="flex items-center">
+                <label className="w-24 font-bold text-[#DA7534]">Cycle:</label>
+                <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
                 {`${currentCycle}/${selectedTask?.cycleCount || "N/A"}`}
+                </div>
               </div>
-            </div>
-            <div className="flex items-center">
+              <div className="flex items-center">
               <label className="w-24 font-bold text-[#DA7534]">Test Method:</label>
               <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
                 {selectedTask?.testMethod || "N/A"}
               </div>
             </div>
+              </>
+            )}
+            
           </div>
         </div>
 
         {/* Task Table */}
         <div className="overflow-x-auto mt-6">
-          <div className="max-h-[350px] overflow-y-auto">
+          <div className="max-h-[280px] overflow-y-auto">
             <table className="min-w-full bg-white shadow-md rounded-lg border">
               <thead className="sticky top-0 bg-[#588C91] text-gray-100 h-20">
                 <tr>
@@ -277,12 +374,12 @@ function HomePage() {
                       >
                         Edit
                       </button>
-                      <button
+                      {/* <button
                         className="bg-[#F9594C] text-white px-4 py-1 rounded-md hover:bg-[#F79251] ml-2"
                         onClick={() => handleDeleteClick(task.id)}
                       >
                         Delete
-                      </button>
+                      </button> */}
                     </td>
                   </tr>
                 ))}
@@ -292,15 +389,19 @@ function HomePage() {
         </div>
         {/* Absolute Buttons in Bottom Right */}
         <div className="fixed bottom-24 right-5 flex gap-4">
-          <button className="bg-[#588C91] text-white px-10 py-4 rounded-md hover:bg-blue-600">
+          <button className="bg-[#267f87] text-white px-10 py-4 rounded-md hover:bg-blue-600"
+          onClick={handleRunClick}>
             Run Task
           </button>
           <button className="bg-[#DA7534] text-white px-10 py-4 rounded-md hover:bg-orange-600">
             Report
           </button>
-          <button className="bg-[#F9594C] text-white px-10 py-4 rounded-md hover:bg-red-600">
-            Download
-          </button>
+            <button 
+            className="bg-[#F9594C] text-white px-10 py-4 rounded-md hover:bg-red-600"
+            onClick={() => setIsRunning((prev) => !prev)}
+            >
+            {isRunning ? "Auto" : "Manual"}
+            </button>
         </div>
       </div>
       <Footer />

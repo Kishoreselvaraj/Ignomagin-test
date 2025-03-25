@@ -74,18 +74,18 @@ function NavBar() {
               >
                 Home
               </Link>
+              <Link
+                href="/task"
+                className={`hover:text-yellow-300 ${
+                  pathname === "/task" ? "text-yellow-400" : "text-white"
+                }`}
+              >
+                Task
+              </Link>
 
               {/* Show Task & User only if the role is "admin" */}
               {role === "admin" && (
                 <>
-                  <Link
-                    href="/task"
-                    className={`hover:text-yellow-300 ${
-                      pathname === "/task" ? "text-yellow-400" : "text-white"
-                    }`}
-                  >
-                    Task
-                  </Link>
                   <Link
                     href="/user"
                     className={`hover:text-yellow-300 ${

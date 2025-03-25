@@ -18,7 +18,9 @@ export default function TaskForm() {
   const [posUnit, setPosUnit] = useState("MM"); // Default to MM
   const [part, setPart] = useState("");
   const [speedUnit, setSpeedUnit] = useState("MS"); // Default to MS
-  const [testMethod, setTestMethod] = useState("standard"); // Default to standard
+  const [testMethod, setTestMethod] = useState(() => {
+    return localStorage.getItem("userRole") === "admin" ? "standard" : "custom";
+  });
 
   // API and UI state
   const [loading, setLoading] = useState(false);
@@ -82,20 +84,20 @@ export default function TaskForm() {
   const handleProductSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const productId = e.target.value;
     setSelectedProductId(productId);
-
+  
     if (!productId) {
       // Reset form if no product selected
       resetForm();
       return;
     }
-
+  
     const selectedProduct = products.find((p: any) => p.id === productId);
     if (selectedProduct) {
       setTaskName(selectedProduct.name || "");
-
+  
       // Reset part selection
       setPart("");
-
+  
       // Reset motion and other part-specific fields
       setMotionType("");
       setPos1("0");
@@ -103,11 +105,26 @@ export default function TaskForm() {
       setSpeed("0");
       setPosUnit("MM");
       setSpeedUnit("MS");
-
+  
       // Set available parts for this product
       setParts(selectedProduct.parts || []);
     }
   };
+  
+  // Automatically select the first product on component mount or when products change
+  useEffect(() => {
+    if (products.length > 0) {
+      const firstProduct = products[0];
+      setSelectedProductId(firstProduct.id);
+  
+      // Trigger the selection logic
+      const event = {
+        target: { value: firstProduct.id }
+      } as React.ChangeEvent<HTMLSelectElement>;
+  
+      handleProductSelect(event);
+    }
+  }, [products]);
 
   // Handle part selection
   const handlePartSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -281,9 +298,16 @@ export default function TaskForm() {
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
-                  Product Name
+                  Task Name
                 </label>
-                <select
+                <input
+                  type="text"
+                  value={taskName}
+                  onChange={(e) => setTaskName(e.target.value)}
+                  className="w-full p-3 border rounded-md shadow-sm"
+                  required
+                />
+                {/* <select
                   value={selectedProductId}
                   onChange={handleProductSelect}
                   className="w-full p-3 border rounded-md shadow-sm"
@@ -295,7 +319,7 @@ export default function TaskForm() {
                       {product.name}
                     </option>
                   ))}
-                </select>
+                </select> */}
               </div>
 
               <div>
@@ -332,8 +356,12 @@ export default function TaskForm() {
                   required
                   disabled={!part}
                 >
-                  <option value="standard">Standard</option>
-                  <option value="custom">Custom</option>
+                  {localStorage.getItem("userRole") === "admin" ? (
+                    <option value="standard">Standard</option>
+                  ) : 
+                  <option value="custom">Custom</option>}
+                  {/* <option value="standard">Standard</option>
+                  <option value="custom">Custom</option> */}
                 </select>
               </div>
             </div>
@@ -346,28 +374,70 @@ export default function TaskForm() {
                 <input
                   type="number"
                   value={pos1}
-                  onChange={(e) => setPos1(e.target.value)}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    const selectedProduct = products.find(
+                      (p: any) => p.id === selectedProductId
+                    );
+                    const partData = selectedProduct?.parts.find(
+                      (p: any) => p.id === part || p.name === part
+                    );
+                    if (!isNaN(value)) {
+                      const min = partData?.pos1 ? parseInt(partData.pos1, 10) : 0; // Set the minimum value
+                      const max = partData?.pos2 ? parseInt(partData.pos2, 10) : 100; // Set the maximum value
+                      setPos1((value < min ? min : value > max ? max : value).toString());  // Limit the value within the range
+                    } else {
+                      setPos1('');  // Clear invalid input
+                    }
+                  }}
+                  // onChange={(e) => setPos1(e.target.value)}
                   className={`w-full p-3 border rounded-md shadow-sm ${
-                    testMethod === "standard" ? "bg-gray-100" : "bg-white"
+                    testMethod === "standard" ? "bg-white" : "bg-white"
                   }`}
-                  readOnly={testMethod === "standard"}
-                  required
+                  // readOnly={testMethod === "standard"}
+                  // required
                 />
               </div>
 
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
-                  Position 2
-                </label>
+                  Position 2 (Max:{(() => {
+                    const selectedProduct = products.find(
+                      (p: any) => p.id === selectedProductId
+                    );
+                    const partData = selectedProduct?.parts.find(
+                      (p: any) => p.id === part || p.name === part
+                    );
+                    return partData?.pos2 || "N/A";
+                  })()})
+                  </label>
                 <input
                   type="number"
                   value={pos2}
-                  onChange={(e) => setPos2(e.target.value)}
+                  onChange={(e) => {
+                  const value = parseInt(e.target.value, 10);
+                  const selectedProduct = products.find(
+                    (p: any) => p.id === selectedProductId
+                  );
+                  const partData = selectedProduct?.parts.find(
+                    (p: any) => p.id === part || p.name === part
+                  );
+                  if (!isNaN(value)) {
+                    const min = partData?.pos1 ? parseInt(partData.pos1, 10) : 0; // Set the minimum value
+                    const max = partData?.pos2 ? parseInt(partData.pos2, 10) : 100; // Set the maximum value
+                    setPos2((value < min ? min : value > max ? max : value).toString());  // Limit the value within the range
+                  } else {
+                    setPos2('');  // Clear invalid input
+                  }
+                  }}
+                  // onChange={(e) => setPos2(e.target.value)}
                   className={`w-full p-3 border rounded-md shadow-sm ${
-                    testMethod === "standard" ? "bg-gray-100" : "bg-white"
+                    testMethod === "standard" ? "bg-white" : "bg-white"
                   }`}
-                  readOnly={testMethod === "standard"}
-                  required
+                  min={pos1}
+                  
+                  // readOnly={testMethod === "standard"}
+                  // required
                 />
               </div>
 
@@ -421,17 +491,40 @@ export default function TaskForm() {
             <div className="grid grid-cols-4 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
-                  Speed
+                  Speed (Max:{(() => {
+                  const selectedProduct = products.find(
+                    (p: any) => p.id === selectedProductId
+                  );
+                  const partData = selectedProduct?.parts.find(
+                    (p: any) => p.id === part || p.name === part
+                  );
+                  return partData?.speed || "N/A";
+                  })()})
+                  
                 </label>
                 <input
                   type="number"
                   value={speed}
-                  onChange={(e) => setSpeed(e.target.value)}
+                  onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  const selectedProduct = products.find(
+                    (p: any) => p.id === selectedProductId
+                  );
+                  const partData = selectedProduct?.parts.find(
+                    (p: any) => p.id === part || p.name === part
+                  );
+                  if (!isNaN(value)) {
+                    const max = partData?.speed ? parseFloat(partData.speed) : 100; // Set the maximum value
+                    setSpeed((value > max ? max : value).toString()); // Limit the value within the range
+                  } else {
+                    setSpeed(''); // Clear invalid input
+                  }
+                  }}
                   className={`w-full p-3 border rounded-md shadow-sm ${
-                    testMethod === "standard" ? "bg-gray-100" : "bg-white"
+                  testMethod === "standard" ? "bg-white" : "bg-white"
                   }`}
-                  readOnly={testMethod === "standard"}
-                  required
+                  // readOnly={testMethod === "standard"}
+                  // required
                 />
               </div>
 
