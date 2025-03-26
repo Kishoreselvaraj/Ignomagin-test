@@ -15,7 +15,7 @@ if (!fs.existsSync(csvFilePath)) {
   fs.writeFileSync(csvFilePath, 'joint,xyz\n');
 }
 
-export async function OPTIONS(req: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

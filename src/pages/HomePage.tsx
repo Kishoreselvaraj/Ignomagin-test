@@ -1,7 +1,7 @@
 'use client'; // Ensure this is a client component
 // HomePage.tsx
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+// import { useRouter, useSearchParams } from "next/navigation";
 import { PlayIcon, PauseIcon, StopIcon } from "@heroicons/react/24/solid";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
@@ -26,6 +26,7 @@ function HomePage() {
   const [currentCycle, setCurrentCycle] = useState<number>(0);
   const [remainingETC, setRemainingETC] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isCycle, setIsCycle] = useState<boolean>(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
   useEffect(() => {
@@ -58,7 +59,7 @@ function HomePage() {
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
-    if (isRunning && selectedTask?.cycleCount) {
+    if (isCycle && selectedTask?.cycleCount) {
       const maxCycle = parseInt(selectedTask.cycleCount, 10);
       if (currentCycle < maxCycle) {
         interval = setInterval(() => {
@@ -78,7 +79,7 @@ function HomePage() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning, currentCycle, selectedTask]);
+  }, [isCycle, currentCycle, selectedTask]);
 
   useEffect(() => {
     if (selectedTask) {
@@ -122,7 +123,7 @@ function HomePage() {
   };
 
   const handleRunClick = async () => {
-    setIsRunning(true);
+    setIsCycle(true);
 
     // Update CSV file
     await fetch('/api/taskcsv', {
@@ -144,7 +145,7 @@ function HomePage() {
   };
 
   const handlePauseClick = async () => {
-    setIsRunning(false);
+    setIsCycle(false);
 
     // Update CSV file
     await fetch('/api/taskcsv', {
@@ -166,7 +167,7 @@ function HomePage() {
   };
 
   const handleStopClick = async () => {
-    setIsRunning(false);
+    setIsCycle(false);
     setCurrentCycle(0);
     setRemainingETC(parseInt(selectedTask?.etc?.split(" ")[0] || "0", 10));
 
@@ -190,7 +191,6 @@ function HomePage() {
   };
 
   const handleEditClick = (id: string) => {
-    const task = tasks.find((t) => t.id === id);
     // if (task?.testMethod === "standard") {
     //   alert("Standard method cannot be edited.");
     // } else {

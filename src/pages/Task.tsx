@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
 
@@ -18,9 +18,18 @@ export default function TaskForm() {
   const [posUnit, setPosUnit] = useState("MM"); // Default to MM
   const [part, setPart] = useState("");
   const [speedUnit, setSpeedUnit] = useState("MS"); // Default to MS
-  const [testMethod, setTestMethod] = useState(() => {
-    return localStorage.getItem("userRole") === "admin" ? "standard" : "custom";
-  });
+  const [testMethod, setTestMethod] = useState("standard");
+
+useEffect(() => {
+  if (typeof window !== "undefined") {
+    const userRole = localStorage.getItem("userRole");
+    if (userRole === "admin") {
+      setTestMethod("standard");
+    } else {
+      setTestMethod("custom");
+    }
+  }
+}, []);
 
   // API and UI state
   const [loading, setLoading] = useState(false);
@@ -43,7 +52,7 @@ export default function TaskForm() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
-  const [parts, setParts] = useState<{}[]>([]);
+  const [parts, setParts] = useState<Part[]>([]);
 
   // Calculate total run time whenever relevant fields change
   useEffect(() => {
@@ -57,15 +66,10 @@ export default function TaskForm() {
     }
   }, [runTime, totalCycleCount, cycleCount]);
 
-  // Fetch products from API on component mount
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   // Fetch products from backend API
   const fetchProducts = async () => {
     try {
-      // setLoading(true);
+      setLoading(true);
       const response = await fetch("/api/products");
       if (!response.ok) {
         throw new Error("Failed to fetch products");
@@ -75,13 +79,18 @@ export default function TaskForm() {
     } catch (error) {
       console.error("Error fetching products:", error);
       setMessage("Failed to load products.");
-      const selectedProduct = products.find((p) => p.id === selectedProductId);
-      // setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+
   // Handle product selection
-  const handleProductSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleProductSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const productId = e.target.value;
     setSelectedProductId(productId);
   
@@ -91,7 +100,7 @@ export default function TaskForm() {
       return;
     }
   
-    const selectedProduct = products.find((p: any) => p.id === productId);
+    const selectedProduct = products.find((p: Product) => p.id === productId);
     if (selectedProduct) {
       setTaskName(selectedProduct.name || "");
   
@@ -109,7 +118,7 @@ export default function TaskForm() {
       // Set available parts for this product
       setParts(selectedProduct.parts || []);
     }
-  };
+  }, [products]);
   
   // Automatically select the first product on component mount or when products change
   useEffect(() => {
@@ -124,7 +133,7 @@ export default function TaskForm() {
   
       handleProductSelect(event);
     }
-  }, [products]);
+  }, [products, handleProductSelect]);
 
   // Handle part selection
   const handlePartSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -143,12 +152,12 @@ export default function TaskForm() {
     }
 
     const selectedProduct = products.find(
-      (p: any) => p.id === selectedProductId
+      (p: Product) => p.id === selectedProductId
     );
 
     if (selectedProduct && selectedProduct.parts) {
       const partData = selectedProduct.parts.find(
-        (p: any) => p.id === selectedPart || p.name === selectedPart
+        (p: Part) => p.id === selectedPart || p.name === selectedPart
       );
 
       if (partData) {
@@ -176,7 +185,7 @@ export default function TaskForm() {
   };
 
   // Reset form fields
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setTaskName("");
     setPos1("0");
     setPos2("0");
@@ -193,7 +202,7 @@ export default function TaskForm() {
     setParts([]);
     setPosUnit("MM");
     setSpeedUnit("MS");
-  };
+  }, []);
 
   // Form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -204,7 +213,7 @@ export default function TaskForm() {
     const taskData = {
       taskName: taskName.trim() || "Untitled Task",
       productId: selectedProductId.trim() || "Unknown",
-      part: part.trim() || "N/A",
+      part: parts.find(p => p.id === part)?.name || "N/A", // Store part name
       pos1: parseFloat(pos1),
       pos2: parseFloat(pos2),
       posUnit: posUnit.toUpperCase(),
@@ -232,8 +241,8 @@ export default function TaskForm() {
 
       try {
         responseData = JSON.parse(textResponse);
-      } catch (e) {
-        responseData = { message: textResponse };
+            } catch (error) {
+        responseData = { message: textResponse,error:error  };
       }
 
       console.log("API Response:", responseData);
@@ -334,14 +343,14 @@ export default function TaskForm() {
                   disabled={!selectedProductId}
                 >
                   <option value="">Select Part</option>
-                  {parts.map((partOption: any) => (
+                    {parts.map((partOption: Part) => (
                     <option
-                      key={partOption.id || partOption.name}
-                      value={partOption.name}
+                      key={partOption.id}
+                      value={partOption.id}
                     >
                       {partOption.name}
                     </option>
-                  ))}
+                    ))}
                 </select>
               </div>
 
@@ -356,7 +365,7 @@ export default function TaskForm() {
                   required
                   disabled={!part}
                 >
-                  {localStorage.getItem("userRole") === "admin" ? (
+                  {typeof window !== "undefined" && localStorage.getItem("userRole") === "admin" ? (
                     <option value="standard">Standard</option>
                   ) : 
                   <option value="custom">Custom</option>}
@@ -377,10 +386,10 @@ export default function TaskForm() {
                   onChange={(e) => {
                     const value = parseInt(e.target.value, 10);
                     const selectedProduct = products.find(
-                      (p: any) => p.id === selectedProductId
+                      (p: Product) => p.id === selectedProductId
                     );
                     const partData = selectedProduct?.parts.find(
-                      (p: any) => p.id === part || p.name === part
+                      (p: Part) => p.id === part || p.name === part
                     );
                     if (!isNaN(value)) {
                       const min = partData?.pos1 ? parseInt(partData.pos1, 10) : 0; // Set the minimum value
@@ -403,10 +412,10 @@ export default function TaskForm() {
                 <label className="block text-gray-700 font-bold mb-2">
                   Position 2 (Max:{(() => {
                     const selectedProduct = products.find(
-                      (p: any) => p.id === selectedProductId
+                      (p: Product) => p.id === selectedProductId
                     );
                     const partData = selectedProduct?.parts.find(
-                      (p: any) => p.id === part || p.name === part
+                      (p: Part) => p.id === part || p.name === part
                     );
                     return partData?.pos2 || "N/A";
                   })()})
@@ -416,12 +425,12 @@ export default function TaskForm() {
                   value={pos2}
                   onChange={(e) => {
                   const value = parseInt(e.target.value, 10);
-                  const selectedProduct = products.find(
-                    (p: any) => p.id === selectedProductId
-                  );
-                  const partData = selectedProduct?.parts.find(
-                    (p: any) => p.id === part || p.name === part
-                  );
+                    const selectedProduct = products.find(
+                    (p: Product) => p.id === selectedProductId
+                    );
+                    const partData = selectedProduct?.parts.find(
+                    (p: Part) => p.id === part || p.name === part
+                    );
                   if (!isNaN(value)) {
                     const min = partData?.pos1 ? parseInt(partData.pos1, 10) : 0; // Set the minimum value
                     const max = partData?.pos2 ? parseInt(partData.pos2, 10) : 100; // Set the maximum value
@@ -492,12 +501,12 @@ export default function TaskForm() {
               <div>
                 <label className="block text-gray-700 font-bold mb-2">
                   Speed (Max:{(() => {
-                  const selectedProduct = products.find(
-                    (p: any) => p.id === selectedProductId
-                  );
-                  const partData = selectedProduct?.parts.find(
-                    (p: any) => p.id === part || p.name === part
-                  );
+                    const selectedProduct = products.find(
+                    (p: Product) => p.id === selectedProductId
+                    );
+                    const partData = selectedProduct?.parts.find(
+                    (p: Part) => p.id === part || p.name === part
+                    );
                   return partData?.speed || "N/A";
                   })()})
                   
@@ -507,12 +516,12 @@ export default function TaskForm() {
                   value={speed}
                   onChange={(e) => {
                   const value = parseFloat(e.target.value);
-                  const selectedProduct = products.find(
-                    (p: any) => p.id === selectedProductId
-                  );
-                  const partData = selectedProduct?.parts.find(
-                    (p: any) => p.id === part || p.name === part
-                  );
+                    const selectedProduct = products.find(
+                    (p: Product) => p.id === selectedProductId
+                    );
+                    const partData = selectedProduct?.parts.find(
+                    (p: Part) => p.id === part || p.name === part
+                    );
                   if (!isNaN(value)) {
                     const max = partData?.speed ? parseFloat(partData.speed) : 100; // Set the maximum value
                     setSpeed((value > max ? max : value).toString()); // Limit the value within the range

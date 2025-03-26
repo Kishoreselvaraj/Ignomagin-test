@@ -53,22 +53,23 @@ export async function POST(req: NextRequest) {
     }
 
     const {
-      taskName = "Untitled Task",
-      productId = "",
-      part = "Unknown Part",
-      pos1 = 0,
-      pos2 = 0,
-      posUnit = "MM",
-      speed = 0,
-      speedUnit = "MS",
-      cycleCount = 0,
-      totalCycleCount = 0,
-      runTime = 0,
-      totalRunTime = 0,
-      restTime = 0,
-      motionType = "LINEAR",
-      testMethod = "standard"
+      cycleCount,
+      motionType,
+      part,
+      pos1,
+      pos2,
+      posUnit,
+      productId,
+      restTime,
+      runTime,
+      speed,
+      speedUnit,
+      taskName,
+      testMethod,
+      totalCycleCount,
+      totalRunTime
     } = body;
+    console.log("Received task:", cycleCount, motionType, part, pos1, pos2, posUnit, productId, restTime, runTime, speed, speedUnit, taskName, testMethod, totalCycleCount, totalRunTime);
 
     const newTask = await prisma.task.create({
       data: {
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
     console.log("Task created:", newTask);
     return NextResponse.json(newTask, { status: 201, headers });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Prisma Error:", error);
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
       );
     } else {
       return NextResponse.json(
-        { error: "Internal server error", message: error.message },
+        { error: "Internal server error", message: (error as Error).message },
         { status: 500, headers }
       );
     }

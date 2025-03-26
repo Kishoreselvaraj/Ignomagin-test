@@ -91,7 +91,7 @@ export async function PUT(req: Request) {
     // Start a transaction to update both product and parts
     const result = await prisma.$transaction(async (prisma) => {
       // 1. Update the product
-      const updatedProduct = await prisma.product.update({
+      await prisma.product.update({
         where: { id },
         data: { 
           name,

@@ -284,7 +284,7 @@ const EditProduct = () => {
 
               {product.parts.length === 0 ? (
                 <p className="text-gray-500 italic text-center py-4 border border-dashed rounded-lg">
-                  No parts added yet. Click "Add Part" to get started.
+                  No parts added yet. Click to get started.
                 </p>
               ) : (
                 product.parts.map((part, index) => (
