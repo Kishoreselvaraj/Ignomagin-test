@@ -21,7 +21,7 @@ app.on('ready', () => {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
-    icon: path.join(__dirname, 'icon.ico'),  // Windows app icon
+    icon: path.join(__dirname, 'logo_ignomagine.png'),  // Windows app icon
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
