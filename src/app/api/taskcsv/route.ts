@@ -93,7 +93,7 @@ export async function GET() {
           }
 
           // Send the value to the client
-          if (status === 'running' && controller.desiredSize !== null) {
+          if (status === 'RUNNING' || controller.desiredSize !== null) {
             controller.enqueue(new TextEncoder().encode(`data: ${ccCompleteValue}\n\n`));
           }
           
