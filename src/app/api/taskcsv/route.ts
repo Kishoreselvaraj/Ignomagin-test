@@ -4,7 +4,7 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 const csvFilePath = path.join(process.cwd(), 'data', 'hardware_settings.csv');
-
+let status: string = 'STOPPED'; // This should be set based on your application logic
 // ✅ Ensure the CSV file exists
 const ensureFileExists = () => {
   if (!fs.existsSync(path.dirname(csvFilePath))) {
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     csvContent += `CC_COMPLETE,${task.currentCycle || '0'}\n`;
 
     await fs.promises.writeFile(csvFilePath, csvContent);
-
+    status = action === 'running' ? 'RUNNING' : 'STOPPED';
     return new NextResponse(JSON.stringify({ message: 'CSV updated successfully' }), {
       status: 200,
       headers: {
@@ -93,7 +93,10 @@ export async function GET() {
           }
 
           // Send the value to the client
-          controller.enqueue(new TextEncoder().encode(`data: ${ccCompleteValue}\n\n`));
+          if (status === 'running' && controller.desiredSize !== null) {
+            controller.enqueue(new TextEncoder().encode(`data: ${ccCompleteValue}\n\n`));
+          }
+          
         } catch (error) {
           console.error('Error reading CSV:', error);
           controller.enqueue(new TextEncoder().encode(`data: ERROR\n\n`));
