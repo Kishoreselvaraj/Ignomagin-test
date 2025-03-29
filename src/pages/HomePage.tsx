@@ -28,6 +28,23 @@ function HomePage() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isCycle, setIsCycle] = useState<boolean>(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [ccComplete, setCcComplete] = useState('0');
+
+  useEffect(() => {
+    const eventSource = new EventSource('/api/taskcsv');
+
+    eventSource.onmessage = (event) => {
+      setCcComplete(event.data);
+    };
+
+    eventSource.onerror = () => {
+      console.error('SSE connection failed');
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
+  }, []);
+  console.log('ccComplete:', ccComplete);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -311,7 +328,7 @@ function HomePage() {
               <div className="flex items-center">
                 <label className="w-24 font-bold text-[#DA7534]">Cycle:</label>
                 <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
-                {`${currentCycle}/${selectedTask?.cycleCount || "N/A"}`}
+                {`${ccComplete}/${selectedTask?.cycleCount || "N/A"}`}
                 </div>
               </div>
               <div className="flex items-center">

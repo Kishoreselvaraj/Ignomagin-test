@@ -57,7 +57,8 @@
       "src/app/electron/main.js"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "public/logo_ignomagine.png"
     },
     "mac": {
       "target": "dmg"

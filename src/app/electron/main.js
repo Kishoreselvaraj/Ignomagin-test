@@ -1,10 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import { exec } from 'child_process';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let mainWindow;
 const NEXT_PORT = 3000;
@@ -18,10 +14,13 @@ app.on('ready', () => {
   nextServer.stdout.on('data', (data) => console.log(`[Next.js]: ${data}`));
   nextServer.stderr.on('data', (data) => console.error(`[Error]: ${data}`));
 
+  // Use the icon from the build folder
+  const iconPath = path.join(app.getAppPath(), 'public', 'logo_ignomagine.png');
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
-    icon: path.join(__dirname, 'logo_ignomagine.png'),  // Windows app icon
+    icon: iconPath,  // Use the build icon
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false

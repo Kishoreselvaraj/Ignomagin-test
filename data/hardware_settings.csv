@@ -1,6 +1,8 @@
-joint,Part 2
-start_pos,1
-end_pos,500
-status,stop
-C2Complete,100
-CC_complete,0
+Setting,Value
+JOINT,Part 2
+SPEED,0
+START_POS,1
+END_POS,500
+R_STATUS,stop
+C2COMPLETE,100
+CC_COMPLETE,0
