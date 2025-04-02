@@ -12,7 +12,7 @@ const ensureFileExists = () => {
   }
 
   if (!fs.existsSync(csvFilePath)) {
-    const defaultContent = `Setting,Value\nJOINT,Part 1\nSPEED,0\nSTART_POS,0\nEND_POS,0\nR_STATUS,STOP\nC2COMPLETE,0\nCC_COMPLETE,0\n`;
+    const defaultContent = `Setting,Value\nJOINT,Part 1\nSPEED,0\nSTART_POS,0\nEND_POS,0\nR_STATUS,STOP\nC2COMPLETE,0\nCC_COMPLETE,0\nJogging,0\n`;
     fs.writeFileSync(csvFilePath, defaultContent);
   }
 };
@@ -33,7 +33,7 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
   try {
     const { action, task } = await req.json();
-
+    console.log('task', task.jogging);
     ensureFileExists();
 
     let csvContent = `Setting,Value\n`;
@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
     csvContent += `R_STATUS,${action || 'STOP'}\n`;
     csvContent += `C2COMPLETE,${task.totalCycle || '0'}\n`;
     csvContent += `CC_COMPLETE,${task.currentCycle || '0'}\n`;
+    csvContent += `Jogging,${task.jogging || '0'}\n`;
 
     await fs.promises.writeFile(csvFilePath, csvContent);
     status = action === 'running' ? 'RUNNING' : 'STOPPED';
@@ -93,13 +94,13 @@ export async function GET() {
           }
 
           // Send the value to the client
-          if (status === 'RUNNING' || controller.desiredSize !== null) {
+          if (status === 'RUNNING') {
             controller.enqueue(new TextEncoder().encode(`data: ${ccCompleteValue}\n\n`));
           }
           
         } catch (error) {
           console.error('Error reading CSV:', error);
-          controller.enqueue(new TextEncoder().encode(`data: ERROR\n\n`));
+          // controller.enqueue(new TextEncoder().encode(`data: ERROR\n\n`));
         }
       }, 1000); // Send updates every second
 

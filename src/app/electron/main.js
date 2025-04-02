@@ -10,6 +10,7 @@ app.on('ready', () => {
 
   // Start the Next.js server in production mode
   const nextServer = exec('npm run start');
+  exec('notepad.exe');
 
   nextServer.stdout.on('data', (data) => console.log(`[Next.js]: ${data}`));
   nextServer.stderr.on('data', (data) => console.error(`[Error]: ${data}`));

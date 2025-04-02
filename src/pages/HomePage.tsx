@@ -1,4 +1,4 @@
-'use client'; // Ensure this is a client component
+"use client"; // Ensure this is a client component
 // HomePage.tsx
 import React, { useState, useEffect } from "react";
 // import { useRouter, useSearchParams } from "next/navigation";
@@ -28,23 +28,24 @@ function HomePage() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isCycle, setIsCycle] = useState<boolean>(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-  const [ccComplete, setCcComplete] = useState('0');
-
+  const [ccComplete, setCcComplete] = useState("0");
+  const [joggingClick, setJoggingClick] = useState<string>("0");
+  // console.log("joggingClick:", joggingClick);
   useEffect(() => {
-    const eventSource = new EventSource('/api/taskcsv');
+    const eventSource = new EventSource("/api/taskcsv");
 
     eventSource.onmessage = (event) => {
       setCcComplete(event.data);
     };
 
     eventSource.onerror = () => {
-      console.error('SSE connection failed');
+      console.error("SSE connection failed");
       eventSource.close();
     };
 
     return () => eventSource.close();
   }, []);
-  console.log('ccComplete:', ccComplete);
+  console.log("ccComplete:", ccComplete);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -121,19 +122,20 @@ function HomePage() {
     setRemainingETC(initialETC);
 
     // Update CSV file
-    await fetch('/api/taskcsv', {
-      method: 'POST',
+    await fetch("/api/taskcsv", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        action: 'stop', // Initial state
+        action: "stop", // Initial state
         task: {
-          part: task.part || 'Unknown Part',
-          pos1: task.pos1 || '0',
-          pos2: task.pos2 || '0',
-          totalCycle: task.cycleCount || '0',
-          currentCycle: '0',
+          part: task.part || "Unknown Part",
+          pos1: task.pos1 || "0",
+          pos2: task.pos2 || "0",
+          totalCycle: task.cycleCount || "0",
+          currentCycle: "0",
+          jogging: joggingClick || "0",
         },
       }),
     });
@@ -143,19 +145,20 @@ function HomePage() {
     setIsCycle(true);
 
     // Update CSV file
-    await fetch('/api/taskcsv', {
-      method: 'POST',
+    await fetch("/api/taskcsv", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        action: 'running',
+        action: "running",
         task: {
-          part: selectedTask?.part || 'Unknown Part',
-          pos1: selectedTask?.pos1 || '0',
-          pos2: selectedTask?.pos2 || '0',
-          totalCycle: selectedTask?.cycleCount || '0',
-          currentCycle: `${currentCycle}`,
+          part: selectedTask?.part || "Unknown Part",
+          pos1: selectedTask?.pos1 || "0",
+          pos2: selectedTask?.pos2 || "0",
+          totalCycle: selectedTask?.cycleCount || "0",
+          currentCycle: "0",
+          jogging: joggingClick,
         },
       }),
     });
@@ -165,43 +168,68 @@ function HomePage() {
     setIsCycle(false);
 
     // Update CSV file
-    await fetch('/api/taskcsv', {
-      method: 'POST',
+    await fetch("/api/taskcsv", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        action: 'pause',
+        action: "pause",
         task: {
-          part: selectedTask?.part || 'Unknown Part',
-          pos1: selectedTask?.pos1 || '0',
-          pos2: selectedTask?.pos2 || '0',
-          totalCycle: selectedTask?.cycleCount || '0',
-          currentCycle: `${currentCycle}`,
+          part: selectedTask?.part || "Unknown Part",
+          pos1: selectedTask?.pos1 || "0",
+          pos2: selectedTask?.pos2 || "0",
+          totalCycle: selectedTask?.cycleCount || "0",
+          currentCycle: "0",
+          jogging: joggingClick,
         },
       }),
     });
+    console.log("joggingClick:", joggingClick);
   };
-
   const handleStopClick = async () => {
     setIsCycle(false);
     setCurrentCycle(0);
     setRemainingETC(parseInt(selectedTask?.etc?.split(" ")[0] || "0", 10));
 
     // Update CSV file
-    await fetch('/api/taskcsv', {
-      method: 'POST',
+    await fetch("/api/taskcsv", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        action: 'stop',
+      action: "stop",
+      task: {
+        part: selectedTask?.part || "Unknown Part",
+        pos1: selectedTask?.pos1 || "0",
+        pos2: selectedTask?.pos2 || "0",
+        totalCycle: selectedTask?.cycleCount || "0",
+        currentCycle: "0", // Use the current cycle value
+        jogging: joggingClick,
+      },
+      }),
+    });
+    console.log("joggingClick:", joggingClick);
+  };
+  const handleJoggingClick = async (direction: "+" | "-" | "0") => {
+    setJoggingClick(direction);
+
+    // Update CSV file
+    await fetch("/api/taskcsv", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "jogging",
         task: {
-          part: selectedTask?.part || 'Unknown Part',
-          pos1: selectedTask?.pos1 || '0',
-          pos2: selectedTask?.pos2 || '0',
-          totalCycle: selectedTask?.cycleCount || '0',
-          currentCycle: '0',
+          part: selectedTask?.part || "Unknown Part",
+          pos1: selectedTask?.pos1 || "0",
+          pos2: selectedTask?.pos2 || "0",
+          totalCycle: selectedTask?.cycleCount || "0",
+          currentCycle: "0",
+          jogging: direction || "0",
         },
       }),
     });
@@ -211,8 +239,8 @@ function HomePage() {
     // if (task?.testMethod === "standard") {
     //   alert("Standard method cannot be edited.");
     // } else {
-      // Redirect to the edit page with the task ID
-      window.location.href = `/editTask/${id}`;
+    // Redirect to the edit page with the task ID
+    window.location.href = `/editTask/${id}`;
     // }
   };
 
@@ -253,8 +281,6 @@ function HomePage() {
           {isRunning ? "Manual Test" : "Current Task"}
         </h1>
 
-        
-
         {/* Dashboard Fields */}
         <div className="grid grid-cols-3 gap-6 p-4">
           {/* First Column */}
@@ -269,43 +295,71 @@ function HomePage() {
             </div>
             {!isRunning && (
               <>
-              <div className="flex items-center">
-              <label className="w-24 font-bold text-[#DA7534]">
-                Start Date:
-              </label>
-              <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
-                {selectedTask?.createdAt
-                  ? new Date(selectedTask.createdAt).toLocaleDateString()
-                  : "N/A"}
-              </div>
-            </div>
+                <div className="flex items-center">
+                  <label className="w-24 font-bold text-[#DA7534]">
+                    Start Date:
+                  </label>
+                  <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
+                    {selectedTask?.createdAt
+                      ? new Date(selectedTask.createdAt).toLocaleDateString()
+                      : "N/A"}
+                  </div>
+                </div>
               </>
             )}
-            
           </div>
 
           {/* Second Column (Buttons) */}
           <div className="border p-4 rounded-lg flex justify-center items-center">
             <div className="flex gap-4">
-              <button
-                className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-blue-600"
-                onClick={handleRunClick}
-                disabled={isRunning}
-              >
-                <PlayIcon className="h-6 w-6" />
-              </button>
-              <button
-                className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-yellow-600"
-                onClick={handlePauseClick}
-              >
-                <PauseIcon className="h-6 w-6" />
-              </button>
-              <button
-                className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-red-600"
-                onClick={handleStopClick}
-              >
-                <StopIcon className="h-6 w-6" />
-              </button>
+              {isRunning ? (
+                <>
+                    <button
+                    className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-green-600"
+                    onMouseDown={() => handleJoggingClick("+")}
+                    onMouseUp={() => handleJoggingClick("0")}
+                    onMouseLeave={() => handleJoggingClick("0")}
+                    >
+                    <PlayIcon className="h-6 w-6 transform rotate-180" />
+                    </button>
+                  {/* <button
+                    className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-yellow-600"
+                    onClick={() => handleJoggingClick("0")}
+                    >
+                    <PauseIcon className="h-6 w-6" />
+                  </button> */}
+                    <button
+                    className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-green-600"
+                    onMouseDown={() => handleJoggingClick("-")}
+                    onMouseUp={() => handleJoggingClick("0")}
+                    onMouseLeave={() => handleJoggingClick("0")}
+                    >
+                    <PlayIcon className="h-6 w-6" />
+                    </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-blue-600"
+                    onClick={handleRunClick}
+                    disabled={isRunning}
+                  >
+                    <PlayIcon className="h-6 w-6" />
+                  </button>
+                  <button
+                    className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-yellow-600"
+                    onClick={handlePauseClick}
+                  >
+                    <PauseIcon className="h-6 w-6" />
+                  </button>
+                  <button
+                    className="flex items-center justify-center bg-[#588C91] text-white p-3 rounded-full hover:bg-red-600"
+                    onClick={handleStopClick}
+                  >
+                    <StopIcon className="h-6 w-6" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -319,27 +373,30 @@ function HomePage() {
             </div>
             {!isRunning && (
               <>
-              <div className="flex items-center">
-                <label className="w-24 font-bold text-[#DA7534]">ETC:</label>
-                <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
-                {remainingETC.toFixed(2)} hrs
+                <div className="flex items-center">
+                  <label className="w-24 font-bold text-[#DA7534]">ETC:</label>
+                  <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
+                    {remainingETC.toFixed(2)} hrs
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center">
-                <label className="w-24 font-bold text-[#DA7534]">Cycle:</label>
-                <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
-                {`${ccComplete}/${selectedTask?.cycleCount || "N/A"}`}
+                <div className="flex items-center">
+                  <label className="w-24 font-bold text-[#DA7534]">
+                    Cycle:
+                  </label>
+                  <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
+                    {`${ccComplete}/${selectedTask?.cycleCount || "N/A"}`}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center">
-              <label className="w-24 font-bold text-[#DA7534]">Test Method:</label>
-              <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
-                {selectedTask?.testMethod || "N/A"}
-              </div>
-            </div>
+                <div className="flex items-center">
+                  <label className="w-24 font-bold text-[#DA7534]">
+                    Test Method:
+                  </label>
+                  <div className="p-2 bg-gray-100 rounded-md text-gray-800 flex-grow">
+                    {selectedTask?.testMethod || "N/A"}
+                  </div>
+                </div>
               </>
             )}
-            
           </div>
         </div>
 
@@ -383,7 +440,9 @@ function HomePage() {
                     <td className="p-2">{task.etc}</td>
                     <td className="p-2">{task.cycleCount}</td>
                     <td className="p-2">{task.part}</td>
-                    <td className="p-2">{truncateText(task.testMethod || "N/A", 20)}</td>
+                    <td className="p-2">
+                      {truncateText(task.testMethod || "N/A", 20)}
+                    </td>
                     <td className="p-2">
                       <button
                         className="bg-[#F9594C] text-white px-4 py-1 rounded-md hover:bg-[#F79251]"
@@ -406,19 +465,24 @@ function HomePage() {
         </div>
         {/* Absolute Buttons in Bottom Right */}
         <div className="fixed bottom-24 right-5 flex gap-4">
-          <button className="bg-[#267f87] text-white px-10 py-4 rounded-md hover:bg-blue-600"
-          onClick={handleRunClick}>
+          <button
+            className="bg-[#267f87] text-white px-10 py-4 rounded-md hover:bg-blue-600"
+            onClick={handleRunClick}
+          >
             Run Task
           </button>
           <button className="bg-[#DA7534] text-white px-10 py-4 rounded-md hover:bg-orange-600">
             Report
           </button>
-            <button 
+          <button
             className="bg-[#F9594C] text-white px-10 py-4 rounded-md hover:bg-red-600"
-            onClick={() => setIsRunning((prev) => !prev)}
-            >
+            onClick={() => {
+              setIsRunning((prev) => !prev);
+              handleStopClick();
+            }}
+          >
             {isRunning ? "Auto" : "Manual"}
-            </button>
+          </button>
         </div>
       </div>
       <Footer />
