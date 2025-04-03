@@ -1,10 +1,11 @@
 {
   "name": "ignomagin",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "Ignomagin",
-  "main": "src/app/electron/main.js",
-  "description": "Ignomagin is a web application that allows users to create and manage their own image gallery.",  
+  "description": "Ignomagin is a web application that allows users to create and manage their own image gallery.",
   "private": true,
+  "type": "module",
+  "main": "src/app/electron/main.js",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -12,7 +13,7 @@
     "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && npm run electron\"",
     "start": "next start",
     "lint": "next lint",
-    "dist": "next build && electron-builder"
+    "dist": "npm run build && electron-builder"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -36,7 +37,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "electron": "^35.0.1",
+    "electron": "^35.1.2",
     "electron-builder": "^25.1.8",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
@@ -47,21 +48,33 @@
     "typescript": "^5"
   },
   "build": {
-    "appId": "com.yourapp.id",
-    "productName": "MyNextApp",
-    "directories": {
-      "output": "dist"
+  "files": [
+    "server.js",
+    ".next/**/*",
+    "node_modules/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": ".next",
+      "to": "app/.next"
     },
-    "files": [
-      "out/",
-      "src/app/electron/main.js"
-    ],
-    "win": {
-      "target": "nsis",
-      "icon": "public/logo_ignomagine.png"
+    {
+      "from": "server.js",
+      "to": "app/server.js"
     },
-    "mac": {
-      "target": "dmg"
+    {
+      "from": "node_modules",
+      "to": "app/node_modules"
     }
+  ],
+  "win": {
+    "target": "nsis"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
   }
+}
+
 }

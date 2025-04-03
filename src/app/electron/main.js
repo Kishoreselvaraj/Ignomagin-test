@@ -1,52 +1,48 @@
-import { app, BrowserWindow } from 'electron';
-import { exec } from 'child_process';
-import path from 'path';
+import { app, BrowserWindow } from "electron";
+import path from "path";
+import { exec } from "child_process";
 
+const isDev = !app.isPackaged;
 let mainWindow;
-const NEXT_PORT = 3000;
+let serverProcess;
 
-app.on('ready', () => {
-  console.log('Starting Next.js server...');
+function createWindow() {
+    mainWindow = new BrowserWindow({
+        width: 1200,
+        height: 800,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true
+        }
+    });
 
-  // Start the Next.js server in production mode
-  const nextServer = exec('npm run start');
-  exec('notepad.exe');
+    if (isDev) {
+        mainWindow.loadURL("http://localhost:3000");
+    } else {
+        // Correct path for packaged app
+        const serverPath = path.join(process.resourcesPath, "app", "server.js");
 
-  nextServer.stdout.on('data', (data) => console.log(`[Next.js]: ${data}`));
-  nextServer.stderr.on('data', (data) => console.error(`[Error]: ${data}`));
+        serverProcess = exec(`node "${serverPath}"`, (error, stdout, stderr) => {
+            if (error) console.error("Error starting Next.js server:", error);
+            if (stderr) console.error("Next.js server stderr:", stderr);
+            if (stdout) console.log("Next.js server stdout:", stdout);
+        });
 
-  // Use the icon from the build folder
-  const iconPath = path.join(app.getAppPath(), 'public', 'logo_ignomagine.png');
-
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    icon: iconPath,  // Use the build icon
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+        // Wait for the server to start
+        setTimeout(() => {
+            mainWindow.loadURL("http://localhost:3000");
+        }, 3000);
     }
-  });
+}
 
-  // Wait for Next.js to start before loading the URL
-  const serverCheckInterval = setInterval(() => {
-    mainWindow
-      .loadURL(`http://localhost:${NEXT_PORT}`)
-      .then(() => {
-        console.log(`App loaded at http://localhost:${NEXT_PORT}`);
-        clearInterval(serverCheckInterval);
-      })
-      .catch(() => console.log('Waiting for server...'));
-  }, 1000);
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-    nextServer.kill(); // Stop Next.js server when closing the app
-  });
+app.whenReady().then(() => {
+    createWindow();
+    app.on("activate", () => {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+app.on("window-all-closed", () => {
+    if (serverProcess) serverProcess.kill(); // Stop Next.js server when app closes
+    if (process.platform !== "darwin") app.quit();
 });
